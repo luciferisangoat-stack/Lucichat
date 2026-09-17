@@ -6,9 +6,7 @@
 <title>LuciChat — Local AI</title>
 
 <style>
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box;}
 
 body{
   margin:0;
@@ -280,6 +278,7 @@ button:disabled{
 
 <div class="composer">
   <div class="composer-inner">
+
     <input
       id="input"
       type="text"
@@ -291,10 +290,9 @@ button:disabled{
     <button id="send" disabled>
       Send
     </button>
+
   </div>
 </div>
-
-<!-- Creator Modal -->
 
 <div class="modal" id="creatorModal">
 
@@ -302,9 +300,7 @@ button:disabled{
 
     <h2>🔐 Creator Mode</h2>
 
-    <p>
-      Enter the creator PIN.
-    </p>
+    <p>Enter the creator PIN.</p>
 
     <input
       id="pin"
@@ -335,15 +331,6 @@ button:disabled{
 
 <script type="module">
 
-/*
-====================================================
-LUCICHAT CONFIG
-====================================================
-*/
-
-/*
-Smaller model for phones with limited GPU memory.
-*/
 const MODEL =
   "SmolLM2-360M-Instruct-q4f32_1-MLC";
 
@@ -355,18 +342,11 @@ let startupFinished = false;
 
 const messages = [
   {
-    role: "system",
+    role:"system",
     content:
       "You are LuciChat, a friendly personal AI assistant. Be helpful, concise, honest, and safe."
   }
 ];
-
-
-/*
-====================================================
-ELEMENTS
-====================================================
-*/
 
 const statusEl =
   document.getElementById("status");
@@ -399,13 +379,7 @@ const pinEl =
   document.getElementById("pin");
 
 
-/*
-====================================================
-CHAT UI
-====================================================
-*/
-
-function addMessage(role, text){
+function addMessage(role,text){
 
   const wrapper =
     document.createElement("div");
@@ -419,8 +393,7 @@ function addMessage(role, text){
   bubble.className =
     "bubble";
 
-  bubble.textContent =
-    text;
+  bubble.textContent = text;
 
   wrapper.appendChild(bubble);
 
@@ -434,12 +407,6 @@ function addMessage(role, text){
   return bubble;
 }
 
-
-/*
-====================================================
-ERROR DISPLAY
-====================================================
-*/
 
 function showError(error){
 
@@ -486,38 +453,69 @@ ${navigator.userAgent}`;
 }
 
 
-/*
-====================================================
-START AI
-====================================================
-*/
+async function checkUrl(url,label){
+
+  progressEl.textContent =
+    "Checking " + label + "...";
+
+  try{
+
+    const response =
+      await fetch(url,{
+        method:"GET",
+        headers:{
+          "Range":"bytes=0-0"
+        },
+        cache:"no-store"
+      });
+
+    if(!response.ok){
+
+      throw new Error(
+        label +
+        " returned HTTP " +
+        response.status
+      );
+
+    }
+
+    return true;
+
+  }catch(error){
+
+    throw new Error(
+      label +
+      " could not be reached.\n\n" +
+      "URL:\n" +
+      url +
+      "\n\n" +
+      "Error:\n" +
+      (error?.message || error)
+    );
+
+  }
+}
+
 
 async function startAI(){
 
-  if(starting){
-    return;
-  }
+  if(starting) return;
 
-  if(startupFinished){
-    return;
-  }
+  if(startupFinished) return;
 
   starting = true;
 
   sendBtn.disabled = true;
+
   inputEl.disabled = true;
 
   statusEl.textContent =
     "Checking your device...";
 
-  progressEl.textContent =
-    "";
+  progressEl.textContent = "";
+
 
   try{
-
-    /*
-    Check HTTPS.
-    */
 
     if(!window.isSecureContext){
 
@@ -527,10 +525,6 @@ async function startAI(){
 
     }
 
-
-    /*
-    Check WebGPU.
-    */
 
     if(!navigator.gpu){
 
@@ -545,12 +539,9 @@ async function startAI(){
       "Checking WebGPU...";
 
 
-    /*
-    Ask the browser for a GPU adapter.
-    */
-
     const adapter =
       await navigator.gpu.requestAdapter();
+
 
     if(!adapter){
 
@@ -565,11 +556,8 @@ async function startAI(){
       "Loading WebLLM...";
 
 
-    /*
-    Dynamically load WebLLM.
-    */
-
     let WebLLM;
+
 
     try{
 
@@ -588,17 +576,15 @@ async function startAI(){
     }
 
 
-    /*
-    Make sure the selected model exists.
-    */
-
     const modelList =
       WebLLM.prebuiltAppConfig?.model_list || [];
+
 
     const modelInfo =
       modelList.find(
         m => m.model_id === MODEL
       );
+
 
     if(!modelInfo){
 
@@ -611,11 +597,46 @@ async function startAI(){
 
 
     /*
-    Start the local AI engine.
+      NEW DIAGNOSTICS
+
+      We check the model's small config file
+      and the WebGPU WASM library before asking
+      WebLLM to download the full model.
     */
+
+
+    const modelBase =
+      modelInfo.model.replace(/\/$/,"");
+
+
+    const configUrl =
+      modelBase +
+      "/mlc-chat-config.json";
+
+
+    statusEl.textContent =
+      "Checking AI model files...";
+
+
+    await checkUrl(
+      configUrl,
+      "AI model configuration"
+    );
+
+
+    statusEl.textContent =
+      "Checking WebGPU library...";
+
+
+    await checkUrl(
+      modelInfo.model_lib,
+      "WebGPU model library"
+    );
+
 
     statusEl.textContent =
       "Downloading local AI model...";
+
 
     progressEl.textContent =
       "The first download can take a while. Please keep this page open.";
@@ -625,12 +646,12 @@ async function startAI(){
       await WebLLM.CreateMLCEngine(
         MODEL,
         {
+
           initProgressCallback:
             function(progress){
 
-              if(!progress){
-                return;
-              }
+              if(!progress) return;
+
 
               if(progress.text){
 
@@ -655,17 +676,14 @@ async function startAI(){
 
             },
 
-          logLevel:
-            "ERROR"
+          logLevel:"ERROR"
+
         }
       );
 
 
-    /*
-    Success.
-    */
-
     startupFinished = true;
+
     starting = false;
 
     statusEl.textContent =
@@ -675,6 +693,7 @@ async function startAI(){
       "Local AI is running on this device.";
 
     inputEl.disabled = false;
+
     sendBtn.disabled = false;
 
     inputEl.placeholder =
@@ -696,10 +715,6 @@ async function startAI(){
     showError(error);
 
 
-    /*
-    Retry button.
-    */
-
     const retry =
       document.createElement("button");
 
@@ -718,6 +733,7 @@ async function startAI(){
 
       };
 
+
     chatEl.appendChild(retry);
 
   }
@@ -725,20 +741,14 @@ async function startAI(){
 }
 
 
-/*
-====================================================
-SEND MESSAGE
-====================================================
-*/
-
 async function sendMessage(){
 
   const text =
     inputEl.value.trim();
 
-  if(!text){
-    return;
-  }
+
+  if(!text) return;
+
 
   if(!engine){
 
@@ -752,29 +762,24 @@ async function sendMessage(){
   }
 
 
-  /*
-  Show user message.
-  */
-
   addMessage(
     "user",
     text
   );
 
+
   inputEl.value = "";
 
   inputEl.disabled = true;
+
   sendBtn.disabled = true;
+
 
   messages.push({
     role:"user",
     content:text
   });
 
-
-  /*
-  Temporary thinking message.
-  */
 
   const thinking =
     addMessage(
@@ -787,20 +792,20 @@ async function sendMessage(){
 
     const reply =
       await engine.chat.completions.create({
+
         messages:messages,
+
         temperature:0.7,
+
         max_tokens:300
+
       });
 
 
     const answer =
-      reply?.choices?.[0]?.message?.content
-      || "I didn't get a response.";
+      reply?.choices?.[0]?.message?.content ||
+      "I didn't get a response.";
 
-
-    /*
-    Replace Thinking...
-    */
 
     thinking.textContent =
       answer;
@@ -814,15 +819,16 @@ async function sendMessage(){
 
   }catch(error){
 
+    console.error(error);
+
     thinking.textContent =
       "Sorry, something went wrong while generating the response.";
-
-    console.error(error);
 
   }
 
 
   inputEl.disabled = false;
+
   sendBtn.disabled = false;
 
   inputEl.focus();
@@ -830,23 +836,11 @@ async function sendMessage(){
 }
 
 
-/*
-====================================================
-SEND BUTTON
-====================================================
-*/
-
 sendBtn.addEventListener(
   "click",
   sendMessage
 );
 
-
-/*
-====================================================
-ENTER KEY
-====================================================
-*/
 
 inputEl.addEventListener(
   "keydown",
@@ -866,12 +860,6 @@ inputEl.addEventListener(
   }
 );
 
-
-/*
-====================================================
-CREATOR MODE
-====================================================
-*/
 
 creatorBtn.addEventListener(
   "click",
@@ -949,15 +937,8 @@ unlockCreator.addEventListener(
 );
 
 
-/*
-====================================================
-RESTORE CREATOR STATUS
-====================================================
-*/
-
 if(
-  localStorage.getItem("luciCreator")
-  === "true"
+  localStorage.getItem("luciCreator") === "true"
 ){
 
   creatorBtn.textContent =
@@ -965,12 +946,6 @@ if(
 
 }
 
-
-/*
-====================================================
-START LUCICHAT
-====================================================
-*/
 
 startAI();
 
