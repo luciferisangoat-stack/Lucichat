@@ -1,248 +1,104 @@
-export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
+const SELF_REPAIR_SCRIPT = String.raw`<script>
+(()=>{
+  const MODEL='SmolLM2-360M-Instruct-q4f32_1-MLC';
+  let enginePromise=null;
+  const errors=[];
+  try{const old=JSON.parse(localStorage.getItem('luci_repair_errors')||'[]');if(Array.isArray(old))errors.push(...old.slice(-20));}catch(e){}
+  function log(stage,e){const x={time:new Date().toISOString(),stage,message:e?.message||String(e)};errors.push(x);if(errors.length>20)errors.shift();try{localStorage.setItem('luci_repair_errors',JSON.stringify(errors));}catch(_){}return x;}
+  async function engine(){
+    if(enginePromise)return enginePromise;
+    enginePromise=(async()=>{
+      if(!window.isSecureContext||!navigator.gpu)throw new Error('WebGPU unavailable');
+      const m=await import('https://esm.run/@mlc-ai/web-llm');
+      const a=await navigator.gpu.requestAdapter();if(!a)throw new Error('No WebGPU adapter');
+      const model=a.features?.has('shader-f16')?'SmolLM2-360M-Instruct-q4f16_1-MLC':MODEL;
+      return m.CreateMLCEngine(model,{initProgressCallback:p=>{if(p?.text){const s=document.getElementById('status');if(s)s.textContent='Self-repair: '+p.text;}}});
+    })().catch(e=>{enginePromise=null;throw e});
+    return enginePromise;
+  }
+  const nativeFetch=window.fetch.bind(window);
+  window.fetch=async function(input,init){
+    const url=typeof input==='string'?input:(input?.url||'');
+    if(url.startsWith('https://text.pollinations.ai/')){
+      try{
+        const body=JSON.parse(init?.body||'{}');
+        const eng=await engine();
+        const result=await eng.chat.completions.create({messages:body.messages||[],temperature:body.temperature??.5,max_tokens:body.max_tokens||180});
+        const answer=result?.choices?.[0]?.message?.content||'';const resp=new Response(answer,{status:200,headers:{'Content-Type':'text/plain;charset=UTF-8','X-Luci-Local':'1'}});resp.json=async()=>result;return resp;
+      }catch(e){
+        log('fetch self-repair',e);
+        try{enginePromise=null;const eng=await engine();const body=JSON.parse(init?.body||'{}');const result=await eng.chat.completions.create({messages:body.messages||[],temperature:.3,max_tokens:120});const answer=result?.choices?.[0]?.message?.content||'';const resp=new Response(answer,{status:200,headers:{'Content-Type':'text/plain;charset=UTF-8','X-Luci-Local':'1'}});resp.json=async()=>result;return resp;}catch(e2){log('fetch repair retry',e2);throw e2;}
+      }
+    }
+    return nativeFetch(input,init);
+  };
+  window.LuciSelfRepair={errors,report:()=>errors.map(x=>'['+x.time+'] '+x.stage+': '+x.message).join('\\n'),retry:()=>{enginePromise=null;}};
+  window.addEventListener('error',e=>log('javascript',e.error||e.message));
+  window.addEventListener('unhandledrejection',e=>log('promise',e.reason));
+})();
+</script>`;
 
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
     const cors = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
-      "Access-Control-Allow-Headers": "*",
-      "Access-Control-Expose-Headers":
-        "Content-Length, Content-Range, Accept-Ranges, ETag"
+      'Access-Control-Allow-Origin':'*',
+      'Access-Control-Allow-Methods':'GET,HEAD,OPTIONS,POST',
+      'Access-Control-Allow-Headers':'*',
+      'Access-Control-Expose-Headers':'Content-Length, Content-Range, Accept-Ranges, ETag'
     };
 
-    // CORS preflight
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: cors
-      });
+    if(request.method==='OPTIONS') return new Response(null,{status:204,headers:cors});
+
+    if(url.pathname==='/proxy-test') return new Response('LuciChat proxy is working!',{status:200,headers:{...cors,'Content-Type':'text/plain;charset=UTF-8','Cache-Control':'no-store'}});
+
+    if(url.pathname==='/test-hf'){
+      const target='https://huggingface.co/mlc-ai/SmolLM2-360M-Instruct-q4f32_1-MLC/resolve/main/mlc-chat-config.json';
+      try{
+        const response=await fetch(target,{method:'GET',redirect:'follow'});
+        return new Response('HF status: '+response.status+'\\nHF content-type: '+(response.headers.get('content-type')||'unknown'),{status:200,headers:{...cors,'Content-Type':'text/plain;charset=UTF-8','Cache-Control':'no-store'}});
+      }catch(error){return new Response('HF ERROR: '+error.message,{status:502,headers:{...cors,'Content-Type':'text/plain;charset=UTF-8'}});}
     }
 
-    // Only GET and HEAD
-    if (request.method !== "GET" && request.method !== "HEAD") {
-      return new Response("Method not allowed", {
-        status: 405,
-        headers: cors
-      });
+    if(url.pathname.startsWith('/hf/')){
+      const path=url.pathname.slice(4);
+      return proxy(request,'https://huggingface.co/'+path+'/resolve/main/'+url.search,cors);
     }
 
-    // --------------------------------------------------
-    // WORKER TEST
-    // --------------------------------------------------
-
-    if (url.pathname === "/proxy-test") {
-      return new Response("LuciChat proxy is working!", {
-        status: 200,
-        headers: {
-          ...cors,
-          "Content-Type": "text/plain;charset=UTF-8",
-          "Cache-Control": "no-store"
-        }
-      });
+    if(url.pathname.startsWith('/lib/')){
+      const path=url.pathname.slice(5);
+      return proxy(request,'https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/'+path+url.search,cors);
     }
 
-    // --------------------------------------------------
-    // HUGGING FACE TEST
-    // --------------------------------------------------
-
-    if (url.pathname === "/test-hf") {
-      const target =
-        "https://huggingface.co/mlc-ai/" +
-        "SmolLM2-360M-Instruct-q4f32_1-MLC/" +
-        "resolve/main/mlc-chat-config.json";
-
-      try {
-        const response = await fetch(target, {
-          method: "GET",
-          redirect: "follow"
-        });
-
-        return new Response(
-          "HF status: " + response.status + "\n" +
-          "HF content-type: " +
-          (response.headers.get("content-type") || "unknown"),
-          {
-            status: 200,
-            headers: {
-              ...cors,
-              "Content-Type": "text/plain;charset=UTF-8",
-              "Cache-Control": "no-store"
-            }
-          }
-        );
-      } catch (error) {
-        return new Response(
-          "HF ERROR: " + error.message,
-          {
-            status: 502,
-            headers: {
-              ...cors,
-              "Content-Type": "text/plain;charset=UTF-8"
-            }
-          }
-        );
-      }
+    if((url.pathname==='/'||url.pathname==='/index.html') && request.method==='GET' && env.ASSETS){
+      const asset=await env.ASSETS.fetch(new Request(new URL('/index.html',url),request));
+      if(!asset.ok) return asset;
+      const type=asset.headers.get('content-type')||'';
+      if(!type.includes('text/html')) return asset;
+      const html=await asset.text();
+      const injected=html.includes('LuciSelfRepair')?html:html.replace(/<\\/head>/i,SELF_REPAIR_SCRIPT+'</head>');
+      const headers=new Headers(asset.headers);headers.set('Content-Type','text/html;charset=UTF-8');headers.set('Cache-Control','no-store');
+      return new Response(injected,{status:asset.status,headers});
     }
 
-    // --------------------------------------------------
-    // HUGGING FACE MODEL FILES
-    // --------------------------------------------------
+    if(env.ASSETS && (request.method==='GET'||request.method==='HEAD')) return env.ASSETS.fetch(request);
 
-    if (url.pathname.startsWith("/hf/")) {
-      const path = url.pathname.slice(4);
+    if(request.method!=='GET' && request.method!=='HEAD') return new Response('Method not allowed',{status:405,headers:cors});
 
-      const target =
-        "https://huggingface.co/" +
-        path +
-        "/resolve/main/" +
-        url.search;
-
-      return proxy(request, target, cors);
-    }
-
-    // --------------------------------------------------
-    // WEBLLM WASM FILES
-    // --------------------------------------------------
-
-    if (url.pathname.startsWith("/lib/")) {
-      const path = url.pathname.slice(5);
-
-      const target =
-        "https://raw.githubusercontent.com/" +
-        "mlc-ai/binary-mlc-llm-libs/main/" +
-        "web-llm-models/" +
-        path +
-        url.search;
-
-      return proxy(request, target, cors);
-    }
-
-    // --------------------------------------------------
-    // ROOT
-    // --------------------------------------------------
-
-    return new Response(
-      "LuciChat Worker is running.\n\n" +
-      "Tests:\n" +
-      "/proxy-test\n" +
-      "/test-hf\n\n" +
-      "Proxy:\n" +
-      "/hf/...\n" +
-      "/lib/...",
-      {
-        status: 200,
-        headers: {
-          ...cors,
-          "Content-Type": "text/plain;charset=UTF-8",
-          "Cache-Control": "no-store"
-        }
-      }
-    );
+    return new Response('LuciChat Worker is running.\\n\\nTests:\\n/proxy-test\\n/test-hf\\n\\nProxy:\\n/hf/...\\n/lib/...',{status:200,headers:{...cors,'Content-Type':'text/plain;charset=UTF-8','Cache-Control':'no-store'}});
   }
 };
 
-
-// ======================================================
-// PROXY
-// ======================================================
-
-async function proxy(request, target, cors) {
-  try {
-    const headers = new Headers();
-
-    // Preserve range requests.
-    const range = request.headers.get("Range");
-
-    if (range) {
-      headers.set("Range", range);
-    }
-
-    // Preserve If-Range.
-    const ifRange = request.headers.get("If-Range");
-
-    if (ifRange) {
-      headers.set("If-Range", ifRange);
-    }
-
-    const response = await fetch(target, {
-      method: request.method,
-      headers,
-      redirect: "follow"
-    });
-
-    // Don't pass every upstream header through.
-    // Some upstream headers can cause browser Cache API
-    // failures.
-    const out = new Headers();
-
-    const contentType =
-      response.headers.get("Content-Type");
-
-    const contentLength =
-      response.headers.get("Content-Length");
-
-    const contentRange =
-      response.headers.get("Content-Range");
-
-    const etag =
-      response.headers.get("ETag");
-
-    const lastModified =
-      response.headers.get("Last-Modified");
-
-    const cacheControl =
-      response.headers.get("Cache-Control");
-
-    if (contentType) {
-      out.set("Content-Type", contentType);
-    }
-
-    if (contentLength) {
-      out.set("Content-Length", contentLength);
-    }
-
-    if (contentRange) {
-      out.set("Content-Range", contentRange);
-    }
-
-    if (etag) {
-      out.set("ETag", etag);
-    }
-
-    if (lastModified) {
-      out.set("Last-Modified", lastModified);
-    }
-
-    if (cacheControl) {
-      out.set("Cache-Control", cacheControl);
-    }
-
-    // Required CORS headers.
-    for (const [key, value] of Object.entries(cors)) {
-      out.set(key, value);
-    }
-
-    // WebLLM uses range requests for large files.
-    out.set("Accept-Ranges", "bytes");
-
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: out
-    });
-
-  } catch (error) {
-    return new Response(
-      "Proxy error: " + error.message,
-      {
-        status: 502,
-        headers: {
-          ...cors,
-          "Content-Type":
-            "text/plain;charset=UTF-8",
-          "Cache-Control": "no-store"
-        }
-      }
-    );
-  }
+async function proxy(request,target,cors){
+  try{
+    const headers=new Headers();
+    const range=request.headers.get('Range');if(range)headers.set('Range',range);
+    const ifRange=request.headers.get('If-Range');if(ifRange)headers.set('If-Range',ifRange);
+    const response=await fetch(target,{method:request.method,headers,redirect:'follow'});
+    const out=new Headers();
+    for(const name of ['Content-Type','Content-Length','Content-Range','ETag','Last-Modified','Cache-Control']){const value=response.headers.get(name);if(value)out.set(name,value);}
+    for(const [key,value] of Object.entries(cors))out.set(key,value);
+    out.set('Accept-Ranges','bytes');
+    return new Response(response.body,{status:response.status,statusText:response.statusText,headers:out});
+  }catch(error){return new Response('Proxy error: '+error.message,{status:502,headers:{...cors,'Content-Type':'text/plain;charset=UTF-8','Cache-Control':'no-store'}});}
 }
