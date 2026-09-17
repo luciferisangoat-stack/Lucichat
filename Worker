@@ -1,0 +1,322 @@
+export default {
+
+  async fetch(request) {
+
+    const url =
+      new URL(request.url);
+
+    /*
+     * CORS
+     */
+    const cors = {
+
+      "Access-Control-Allow-Origin": "*",
+
+      "Access-Control-Allow-Methods":
+        "GET,HEAD,OPTIONS",
+
+      "Access-Control-Allow-Headers":
+        "*",
+
+      "Access-Control-Expose-Headers":
+        "Content-Length,Content-Range,Accept-Ranges,ETag"
+
+    };
+
+
+    /*
+     * OPTIONS
+     */
+    if(request.method === "OPTIONS"){
+
+      return new Response(
+        null,
+        {
+          status:204,
+          headers:cors
+        }
+      );
+
+    }
+
+
+    /*
+     * Only allow GET/HEAD.
+     */
+    if(
+      request.method !== "GET" &&
+      request.method !== "HEAD"
+    ){
+
+      return new Response(
+        "Method not allowed",
+        {
+          status:405,
+          headers:cors
+        }
+      );
+
+    }
+
+
+    /*
+     * Hugging Face model files.
+     *
+     * /hf/mlc-ai/SmolLM2-360M-Instruct-q4f32_1-MLC/FILE
+     *
+     * becomes:
+     *
+     * https://huggingface.co/mlc-ai/SmolLM2-360M-Instruct-q4f32_1-MLC/resolve/main/FILE
+     */
+    if(
+      url.pathname.startsWith("/hf/")
+    ){
+
+      const path =
+        url.pathname.substring(4);
+
+
+      const target =
+        "https://huggingface.co/" +
+        path +
+        "/resolve/main/" +
+        url.search;
+
+
+      return proxy(
+        request,
+        target,
+        cors
+      );
+
+    }
+
+
+    /*
+     * WebGPU WASM library.
+     *
+     * /lib/v0_2_84/base/FILE
+     *
+     * becomes:
+     *
+     * https://raw.githubusercontent.com/
+     * mlc-ai/binary-mlc-llm-libs/main/
+     * web-llm-models/v0_2_84/base/FILE
+     */
+    if(
+      url.pathname.startsWith("/lib/")
+    ){
+
+      const path =
+        url.pathname.substring(5);
+
+
+      const target =
+        "https://raw.githubusercontent.com/" +
+        "mlc-ai/binary-mlc-llm-libs/main/" +
+        "web-llm-models/" +
+        path +
+        url.search;
+
+
+      return proxy(
+        request,
+        target,
+        cors
+      );
+
+    }
+
+
+    /*
+     * Simple status page.
+     */
+    if(url.pathname === "/proxy-test"){
+
+      return new Response(
+
+        "LuciChat proxy is working.",
+
+        {
+          status:200,
+          headers:{
+            ...cors,
+            "Content-Type":
+              "text/plain;charset=UTF-8"
+          }
+        }
+
+      );
+
+    }
+
+
+    /*
+     * Everything else.
+     */
+    return new Response(
+
+      "LuciChat Worker is running.\n\n" +
+      "Proxy endpoints:\n" +
+      "/proxy-test\n" +
+      "/hf/...\n" +
+      "/lib/...",
+
+      {
+        status:200,
+        headers:{
+          ...cors,
+          "Content-Type":
+            "text/plain;charset=UTF-8"
+        }
+      }
+
+    );
+
+  }
+
+};
+
+
+/*
+ * Proxy helper.
+ */
+async function proxy(
+  request,
+  target,
+  cors
+){
+
+  try{
+
+    /*
+     * Forward useful request headers,
+     * especially Range requests.
+     */
+    const headers =
+      new Headers();
+
+
+    const range =
+      request.headers.get("Range");
+
+    if(range){
+
+      headers.set(
+        "Range",
+        range
+      );
+
+    }
+
+
+    const ifRange =
+      request.headers.get("If-Range");
+
+    if(ifRange){
+
+      headers.set(
+        "If-Range",
+        ifRange
+      );
+
+    }
+
+
+    const response =
+      await fetch(
+
+        target,
+
+        {
+          method:
+            request.method,
+
+          headers:
+            headers,
+
+          redirect:
+            "follow"
+
+        }
+
+      );
+
+
+    /*
+     * Copy response headers.
+     */
+    const outHeaders =
+      new Headers(response.headers);
+
+
+    /*
+     * Add CORS.
+     */
+    for(
+      const [key,value]
+      of Object.entries(cors)
+    ){
+
+      outHeaders.set(
+        key,
+        value
+      );
+
+    }
+
+
+    /*
+     * Make sure browser knows
+     * range requests are supported.
+     */
+    outHeaders.set(
+      "Accept-Ranges",
+      "bytes"
+    );
+
+
+    return new Response(
+
+      response.body,
+
+      {
+
+        status:
+          response.status,
+
+        statusText:
+          response.statusText,
+
+        headers:
+          outHeaders
+
+      }
+
+    );
+
+
+  }catch(error){
+
+    return new Response(
+
+      "Proxy error: " +
+      error.message,
+
+      {
+
+        status:502,
+
+        headers:{
+          ...cors,
+          "Content-Type":
+            "text/plain;charset=UTF-8"
+        }
+
+      }
+
+    );
+
+  }
+
+}
