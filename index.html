@@ -7,83 +7,119 @@
 <title>LuciChat — Satanist Luci</title>
 <style>
 *{box-sizing:border-box}
-:root{--red:#ff1733;--deep:#080204;--panel:#0d070a;--line:#64101d;--soft:#d7bfd0;--muted:#9f8998}
-html,body{margin:0;min-height:100%;background:#030303;color:#fff;font-family:Georgia,'Times New Roman',serif}
-body{overflow-x:hidden;background:radial-gradient(circle at 65% 30%,rgba(95,0,12,.35),transparent 32%),radial-gradient(circle at 50% 0%,rgba(85,0,12,.3),transparent 38%),#030303}
-.app{min-height:100vh;display:flex;flex-direction:column;position:relative}
-header{height:100px;display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--red);background:linear-gradient(180deg,#040404,#080204);position:sticky;top:0;z-index:20;box-shadow:0 5px 30px rgba(255,0,25,.08)}
-.brand{display:flex;align-items:center;gap:14px}.logo{width:78px;height:78px;display:grid;place-items:center;color:var(--red);font-size:62px;line-height:1;border:0;text-shadow:0 0 18px rgba(255,20,45,.65);font-family:Georgia,serif}.brand-text .title{font-size:45px;font-weight:700;line-height:.9;letter-spacing:-1px;color:#f0172e}.brand-text .tag{margin-top:10px;font-size:15px;letter-spacing:2px;color:#dfbccf;text-transform:uppercase}
-.top{display:flex;align-items:center;gap:24px}.persona{color:var(--red);font-family:system-ui,sans-serif;font-size:18px;border:0;border-bottom:1px solid var(--red);background:none;padding:10px 8px;cursor:pointer}.dots{background:none;color:var(--red);font-size:28px;padding:4px 8px}
-.layout{display:flex;flex:1;min-height:calc(100vh - 100px)}
-.sidebar{width:375px;flex:0 0 375px;border-right:1px solid var(--red);background:linear-gradient(180deg,#050304,#020202 70%);padding:20px 18px;position:relative;overflow:hidden}.nav{display:flex;flex-direction:column;gap:10px}.nav button{width:100%;display:flex;align-items:center;gap:25px;text-align:left;border:1px solid transparent;background:transparent;color:#d9bfd2;padding:18px 25px;border-radius:0 15px 15px 0;font-family:system-ui,sans-serif;font-size:21px;cursor:pointer}.nav button.active{color:var(--red);background:linear-gradient(90deg,#330009,#160205);border-color:var(--red);box-shadow:0 0 22px rgba(255,0,30,.12)}.nav button:hover{color:#fff;border-color:#6e1824}.ico{width:35px;text-align:center;font-size:31px;color:inherit}.sigil{width:180px;height:180px;border:3px solid #b40019;border-radius:50%;margin:55px auto 28px;display:grid;place-items:center;position:relative;box-shadow:0 0 25px rgba(255,0,25,.14)}.sigil:before{content:'⛧';font-size:125px;color:#cf001e;text-shadow:0 0 15px #ff1530}.side-quote{text-align:center;color:#ef1c32;font-size:20px;letter-spacing:2px;line-height:1.45;text-transform:uppercase}.cross{height:1px;background:linear-gradient(90deg,transparent,var(--red),transparent);margin:20px 30px}
-.content{flex:1;min-width:0;position:relative;background:radial-gradient(circle at 52% 25%,rgba(100,0,15,.25),transparent 34%),radial-gradient(circle at 85% 65%,rgba(110,0,15,.2),transparent 28%);overflow:hidden}.content:before{content:'⛧';position:absolute;left:50%;top:28px;transform:translateX(-50%);font-size:390px;color:rgba(120,0,15,.11);line-height:1;pointer-events:none}.hero{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:110px 40px 210px;text-align:center}.hero h1{font-size:58px;color:var(--red);margin:230px 0 18px;line-height:1.05;font-weight:500}.hero .iam{font-size:25px;letter-spacing:9px;color:#e6cedd;margin-bottom:30px}.divider{width:440px;max-width:85%;height:1px;background:linear-gradient(90deg,transparent,var(--red),transparent);margin:0 auto 35px;position:relative}.divider:after{content:'✦';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:var(--red);background:#080204;padding:0 12px;font-size:22px}.hero p{font-size:21px;line-height:1.65;color:#d5bccb;max-width:760px;margin:0 auto}.hero p strong{color:#fff}
-#chat{position:relative;z-index:2;display:flex;flex-direction:column;gap:14px;max-width:850px;margin:0 auto;padding:0 25px 250px}.msg{font-family:system-ui,sans-serif;max-width:80%;padding:14px 17px;border:1px solid #49121d;border-radius:16px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;background:#0b0809}.msg.user{align-self:flex-end;background:#2b070e;border-color:#821525}.msg.ai{align-self:flex-start;background:#0e0a0c}.who{font-size:11px;color:#c69bad;margin-bottom:5px;font-weight:700}.aiimg{display:block;width:min(100%,650px);border-radius:12px;border:1px solid #7b1726;margin-top:9px}
-.composer-wrap{position:fixed;left:375px;right:0;bottom:0;z-index:15;padding:0 18px 28px;background:linear-gradient(180deg,transparent,rgba(3,1,2,.96) 28%)}.composer{max-width:1150px;margin:0 auto;border:1px solid var(--red);border-radius:60px;background:rgba(7,3,6,.94);box-shadow:0 0 25px rgba(255,0,25,.12);padding:14px 22px}.compose-inner{display:flex;align-items:center;gap:16px}.tool{width:58px;height:58px;flex:0 0 58px;border-radius:50%;border:0;background:transparent;color:#d8c0d1;font-size:34px;cursor:pointer}.tool:hover{color:var(--red);text-shadow:0 0 12px var(--red)}.imagebtn{font-size:34px}.voice{border:2px solid var(--red);color:var(--red);box-shadow:0 0 15px rgba(255,0,30,.32)}.voice:after{content:'⛧';font-size:40px}.voice{font-size:0}.voice.active{background:#33000a;box-shadow:0 0 25px rgba(255,0,30,.65)}textarea{flex:1;min-height:58px;max-height:150px;border:0;outline:0;background:transparent;color:#fff;font:21px system-ui,sans-serif;resize:none;padding:17px 8px}textarea::placeholder{color:#887482}.send{width:58px;height:58px;border:0;background:transparent;color:var(--red);font-size:43px;line-height:1;cursor:pointer}.send:after{content:'➤'}.send:hover{transform:translateX(2px);text-shadow:0 0 14px var(--red)}.status{text-align:center;min-height:18px;color:#b999aa;font:12px system-ui,sans-serif;margin-top:5px}
-.menu{position:fixed;right:20px;top:78px;width:310px;background:#0b0709;border:1px solid var(--red);border-radius:14px;padding:15px;z-index:30;display:none;box-shadow:0 15px 45px rgba(0,0,0,.8),0 0 20px rgba(255,0,30,.12)}.menu.open{display:block}.menu button{display:block;width:100%;text-align:left;background:#14090c;border:1px solid #45111a;color:#e7cfdb;padding:13px;border-radius:10px;margin:7px 0;font:700 15px system-ui,sans-serif}.menu h2{color:var(--red);margin:4px 0 12px;font-size:20px}.menu .close{text-align:center}
-.notice{display:none}
-@media(max-width:900px){header{height:78px;padding:8px 12px}.logo{width:48px;height:48px;font-size:40px}.brand-text .title{font-size:28px}.brand-text .tag{display:none}.top{gap:5px}.persona{font-size:14px}.sidebar{width:260px;flex-basis:260px}.composer-wrap{left:260px}.nav button{font-size:16px;padding:15px}.hero h1{font-size:44px}.hero{padding-top:50px}.hero h1{margin-top:150px}}
-@media(max-width:650px){.layout{display:block}.sidebar{position:fixed;left:-310px;top:78px;bottom:0;width:290px;z-index:25;transition:left .2s ease;box-shadow:15px 0 35px rgba(0,0,0,.7)}.sidebar.open{left:0}.content{min-height:calc(100vh - 78px)}header{position:sticky}.brand-text .title{font-size:25px}.persona{font-size:12px}.dots{font-size:23px}.hero{padding:35px 18px 210px}.hero h1{font-size:39px;margin-top:120px}.hero .iam{font-size:17px;letter-spacing:5px}.hero p{font-size:17px}.content:before{font-size:270px}.composer-wrap{left:0;padding:0 8px 10px}.composer{border-radius:30px;padding:8px 10px}.compose-inner{gap:4px}.tool{width:43px;height:43px;flex-basis:43px;font-size:26px}.voice:after{font-size:30px}.send{width:43px;height:43px;font-size:32px}textarea{font-size:16px;min-height:48px;padding:13px 4px}.nav{padding-top:8px}.sigil{margin-top:40px}.menu{top:65px;right:8px;width:calc(100% - 16px)}}
+:root{--bg:#030303;--panel:#070507;--red:#ed102d;--red2:#ff1838;--soft:#d7bfd4;--muted:#9d8d9b;--line:#5c101d}
+html,body{margin:0;min-height:100%;background:#030303;color:#f7edf5;font-family:Georgia,"Times New Roman",serif}
+body{overflow-x:hidden}
+button,textarea{font:inherit}
+button{cursor:pointer}
+.app{min-height:100vh;display:grid;grid-template-columns:250px 1fr;background:radial-gradient(circle at 67% 38%,rgba(100,0,15,.24),transparent 32%),#030303}
+.sidebar{border-right:1px solid #4c0d19;background:linear-gradient(180deg,#050505,#020202);padding:24px 18px;display:flex;flex-direction:column;min-height:100vh}
+.brand{display:flex;align-items:center;gap:14px;padding:0 5px 18px;border-bottom:1px solid #4c0d19}
+.brandmark{width:62px;height:62px;display:grid;place-items:center;color:var(--red);font-size:48px;line-height:1;text-shadow:0 0 18px rgba(237,16,45,.65)}
+.brandname{font-size:30px;font-weight:700;color:var(--red);line-height:1}
+.brandtag{margin-top:6px;font-size:10px;letter-spacing:2px;color:#d95a70;white-space:nowrap}
+.nav{padding-top:22px;display:grid;gap:8px}
+.nav button{width:100%;display:flex;align-items:center;gap:16px;border:1px solid transparent;background:transparent;color:#d2b8cf;padding:14px 13px;border-radius:13px;text-align:left;font-size:16px}
+.nav button:hover{color:white;background:#18060a;border-color:#4f101b}
+.nav button.active{color:var(--red2);background:linear-gradient(90deg,#30060c,#120307);border-color:#9e1025;box-shadow:inset 4px 0 0 var(--red2)}
+.icon{width:30px;height:30px;display:grid;place-items:center;font-family:system-ui,sans-serif;font-size:25px;color:inherit;flex:none}
+.side-symbol{margin:28px auto 10px;width:120px;height:120px;border:2px solid #a50d24;border-radius:50%;display:grid;place-items:center;color:#d60d27;font-size:76px;text-shadow:0 0 15px rgba(237,16,45,.55);position:relative}
+.side-symbol:before,.side-symbol:after{content:"";position:absolute;background:#9d0c20}
+.side-symbol:before{width:2px;height:155px}.side-symbol:after{height:2px;width:145px}
+.motto{text-align:center;color:#d81735;font-size:16px;line-height:1.45;letter-spacing:2px;margin-top:15px}
+.motto span{display:block;margin:13px auto;border-top:1px solid #771020;width:80%}
+.content{min-width:0;min-height:100vh;display:flex;flex-direction:column;position:relative;background:radial-gradient(circle at 50% 35%,rgba(112,0,17,.22),transparent 34%),radial-gradient(circle at 20% 50%,rgba(85,0,12,.16),transparent 28%),#030303}
+.topbar{height:100px;border-bottom:1px solid #64101e;display:flex;align-items:center;justify-content:flex-end;padding:0 28px;gap:14px;background:rgba(2,2,2,.82);position:relative;z-index:5}
+.mode-select{border:0;border-bottom:1px solid var(--red);background:transparent;color:var(--red2);padding:12px 34px 10px 10px;font-size:16px;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--red2) 50%),linear-gradient(135deg,var(--red2) 50%,transparent 50%);background-position:calc(100% - 15px) 17px,calc(100% - 9px) 17px;background-size:6px 6px;background-repeat:no-repeat}
+.more{width:42px;height:46px;border:0;background:transparent;color:var(--red2);font-size:30px;line-height:1}
+.mobile-menu{display:none;position:absolute;right:16px;top:72px;width:230px;background:#090607;border:1px solid #731021;border-radius:12px;padding:10px;box-shadow:0 15px 40px #000;z-index:20}
+.mobile-menu.open{display:grid;gap:5px}.mobile-menu button{border:0;background:#16070a;color:#e8d8e5;padding:12px;text-align:left;border-radius:8px}.mobile-menu button:hover{background:#2a0a11;color:white}
+.hero{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 45px 190px;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;width:680px;height:680px;border-radius:50%;border:1px solid rgba(180,8,29,.15);box-shadow:0 0 80px rgba(140,0,15,.12);top:8%;left:50%;transform:translateX(-50%)}
+.hero:after{content:"⛧";position:absolute;top:12%;left:50%;transform:translateX(-50%);font-size:min(42vw,390px);line-height:1;color:rgba(124,0,17,.11);text-shadow:0 0 35px rgba(225,0,28,.12);pointer-events:none}
+.hero-inner{width:min(900px,100%);text-align:center;position:relative;z-index:1}
+.welcome-title{font-size:58px;font-weight:500;color:#ed102d;margin:0 0 20px;text-shadow:0 0 14px rgba(237,16,45,.18)}
+.subtitle{font-size:22px;letter-spacing:8px;color:#f2dbe9;margin-bottom:26px}
+.divider{height:2px;width:410px;max-width:80%;margin:0 auto 30px;background:linear-gradient(90deg,transparent,var(--red2),transparent);position:relative}.divider:after{content:"✦";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#050305;color:var(--red2);padding:0 16px;font-size:22px}
+.description{max-width:720px;margin:auto;color:#d6c0d0;font-size:20px;line-height:1.65}.description b{color:#fff}
+.chat{width:min(900px,100%);margin:30px auto 0;display:flex;flex-direction:column;gap:14px;text-align:left}.msg{max-width:82%;padding:13px 16px;border:1px solid #4e111b;border-radius:14px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;font-family:system-ui,-apple-system,sans-serif}.msg.user{align-self:flex-end;background:#21070c}.msg.ai{align-self:flex-start;background:#0b080a}.who{font-size:11px;color:#b88fa4;margin-bottom:5px;font-weight:700}.aiimg{display:block;width:min(100%,620px);border-radius:12px;border:1px solid #6a1725;margin-top:8px}.notice{font-family:system-ui,-apple-system,sans-serif;color:#74666f;font-size:11px;text-align:center;margin-top:15px}
+.composer-wrap{position:fixed;left:250px;right:0;bottom:0;padding:18px 28px 25px;background:linear-gradient(180deg,transparent,rgba(2,2,2,.95) 22%,#020202 100%);z-index:4}.composer{width:min(1120px,100%);margin:auto;border:1px solid var(--red2);border-radius:58px;padding:13px 17px;display:flex;align-items:center;gap:13px;background:rgba(7,4,7,.93);box-shadow:0 0 22px rgba(210,0,30,.12)}
+.tool{width:52px;height:52px;flex:none;border:0;background:transparent;color:#d7bfd4;border-radius:50%;display:grid;place-items:center}.tool:hover{background:#18060a;color:white}.image-tool{font-family:system-ui,sans-serif;font-size:30px}.pent-tool{border:2px solid var(--red2);color:var(--red2);font-size:35px;text-shadow:0 0 10px rgba(237,16,45,.7);box-shadow:0 0 15px rgba(237,16,45,.35)}.pent-tool:hover{background:#27070d}
+textarea{min-width:0;flex:1;background:transparent;border:0;outline:0;color:#eee1eb;font-size:18px;resize:none;height:52px;line-height:52px;padding:0 8px;font-family:system-ui,-apple-system,sans-serif}textarea::placeholder{color:#786c77}
+.send{width:56px;height:52px;flex:none;border:0;background:transparent;color:var(--red2);font-family:system-ui,sans-serif;font-size:42px;line-height:1;transform:translateY(-2px)}.send:disabled{opacity:.4}
+.status{text-align:center;color:#9a7d8d;font:12px system-ui,sans-serif;min-height:18px;margin-top:7px}
+@media(max-width:800px){
+.app{display:block}.sidebar{display:none}.content{min-height:100vh}.topbar{height:82px;padding:0 12px;justify-content:flex-end}.mode-select{font-size:14px}.hero{padding:28px 18px 190px;align-items:flex-start}.hero:before{width:440px;height:440px;top:7%}.hero:after{font-size:310px;top:10%}.welcome-title{font-size:46px;line-height:1.1;margin-top:130px}.subtitle{font-size:15px;letter-spacing:5px}.description{font-size:17px;line-height:1.55}.composer-wrap{left:0;padding:10px 10px 18px}.composer{border-radius:34px;padding:10px 9px;gap:5px}.tool{width:45px;height:45px}.image-tool{font-size:25px}.pent-tool{font-size:29px}textarea{height:45px;line-height:45px;font-size:16px}.send{width:45px;height:45px;font-size:34px}.notice{font-size:10px}.chat{margin-top:24px}.msg{max-width:92%}.more{width:38px}
+}
+@media(min-width:801px){.mobile-only{display:none}}
 </style>
 </head>
 <body>
 <div class="app">
-<header>
-  <div class="brand"><div class="logo">⛧</div><div class="brand-text"><div class="title">LuciChat</div><div class="tag">Your Satanist AI Assistant</div></div></div>
-  <div class="top"><button class="persona" id="personaBtn">Satanist Luci　⌄</button><button class="dots" id="menuBtn" aria-label="Menu">⋮</button></div>
-</header>
-<div class="layout">
-  <aside class="sidebar" id="sidebar">
-    <nav class="nav">
-      <button class="active" data-view="chat"><span class="ico">◌</span><span>Chat</span></button>
-      <button data-view="image"><span class="ico">▧</span><span>Image Generator</span></button>
-      <button data-view="lore"><span class="ico">♧</span><span>Satanic Lore</span></button>
-      <button data-view="settings"><span class="ico">⚙</span><span>Settings</span></button>
-    </nav>
-    <div class="sigil"></div>
-    <div class="side-quote">Knowledge<br>is power</div><div class="cross"></div><div class="side-quote">and power<br>is freedom</div><div class="cross"></div>
-  </aside>
-  <section class="content">
-    <div class="hero" id="hero">
-      <h1>Welcome to LuciChat</h1>
-      <div class="iam">I AM SATANIST LUCI</div>
-      <div class="divider"></div>
-      <p>Ask me about <strong>Satanism, its history, symbolism, philosophy,</strong> and related topics. I'm here to help, guide, and share knowledge — without judgment.</p>
+<aside class="sidebar">
+  <div class="brand"><div class="brandmark">⛧</div><div><div class="brandname">LuciChat</div><div class="brandtag">YOUR SATANIST AI ASSISTANT</div></div></div>
+  <nav class="nav">
+    <button class="active" id="chatNav"><span class="icon">◌</span>Chat</button>
+    <button id="imageNav"><span class="icon">▧</span>Image Generator</button>
+    <button id="loreNav"><span class="icon">♧</span>Satanic Lore</button>
+    <button id="settingsNav"><span class="icon">⚙</span>Settings</button>
+  </nav>
+  <div class="side-symbol">⛧</div>
+  <div class="motto">KNOWLEDGE<br>IS POWER<span></span>AND POWER<br>IS FREEDOM</div>
+</aside>
+<section class="content">
+  <header class="topbar">
+    <select class="mode-select" id="modeSelect" aria-label="LuciChat mode"><option>Satanist Luci</option><option>Satanic Lore</option></select>
+    <button class="more" id="moreBtn" aria-label="More">⋮</button>
+    <div class="mobile-menu" id="moreMenu">
+      <button id="googleBtn">Search Google</button>
+      <button id="newChatBtn">New Chat</button>
+      <button id="settingsBtn">Settings</button>
     </div>
-    <div id="chat"></div>
-  </section>
+  </header>
+  <main class="hero">
+    <div class="hero-inner">
+      <section id="welcome" class="welcome">
+        <h1 class="welcome-title">Welcome to LuciChat</h1>
+        <div class="subtitle">I AM SATANIST LUCI</div>
+        <div class="divider"></div>
+        <p class="description">Ask me about <b>Satanism</b>, its history, symbolism, philosophy, and related topics. I'm here to help, guide, and share knowledge — without judgment.</p>
+      </section>
+      <div id="chat" class="chat"></div>
+      <div class="notice">AI responses use public AI services. Don't put passwords, addresses, or other private information in your messages.</div>
+    </div>
+  </main>
+</section>
+<div class="composer-wrap"><div class="composer">
+  <button class="tool image-tool" id="imageBtn" title="Image Generator" aria-label="Image Generator">▧</button>
+  <button class="tool pent-tool" id="voiceBtn" title="Voice input" aria-label="Voice input">⛧</button>
+  <textarea id="input" rows="1" placeholder="Message LuciChat..." aria-label="Message LuciChat"></textarea>
+  <button class="send" id="send" title="Send" aria-label="Send">➤</button>
+</div><div class="status" id="status"></div></div>
 </div>
-<div class="composer-wrap"><div class="composer"><div class="compose-inner"><button class="tool imagebtn" id="imageBtn" title="Image Generator" aria-label="Image Generator">▧</button><button class="tool voice" id="voiceBtn" title="Voice input" aria-label="Voice input">Voice</button><textarea id="input" rows="1" placeholder="Message LuciChat..." aria-label="Message LuciChat"></textarea><button class="send" id="send" title="Send" aria-label="Send"></button></div><div class="status" id="status"></div></div></div>
-<div class="menu" id="menu"><h2>⛧ LuciChat</h2><button id="newChatBtn">New Chat</button><button id="menuImageBtn">Image Generator</button><button id="menuLoreBtn">Satanic Lore</button><button id="menuSettingsBtn">Settings</button><button class="close" id="closeMenu">Close</button></div>
 <script>
 const TEXT_ENDPOINT='https://text.pollinations.ai/';
 const TEXT_MODEL='openai-fast';
 const IMAGE_ENDPOINT='https://image.pollinations.ai/prompt/';
-const input=document.getElementById('input'),send=document.getElementById('send'),chat=document.getElementById('chat'),hero=document.getElementById('hero'),status=document.getElementById('status'),sidebar=document.getElementById('sidebar'),menu=document.getElementById('menu'),menuBtn=document.getElementById('menuBtn'),imageBtn=document.getElementById('imageBtn'),voiceBtn=document.getElementById('voiceBtn');
-let messages=[];
+const input=document.getElementById('input'),send=document.getElementById('send'),chat=document.getElementById('chat'),welcome=document.getElementById('welcome'),status=document.getElementById('status');
+const moreBtn=document.getElementById('moreBtn'),moreMenu=document.getElementById('moreMenu'),newChatBtn=document.getElementById('newChatBtn'),googleBtn=document.getElementById('googleBtn'),imageBtn=document.getElementById('imageBtn'),voiceBtn=document.getElementById('voiceBtn'),modeSelect=document.getElementById('modeSelect');
+let messages=[];let mode=localStorage.getItem('luci_mode')==='lore'?'lore':'satanic';
 try{messages=JSON.parse(localStorage.getItem('lucichat_messages')||'[]')}catch(e){messages=[]}
-const systemPrompt='You are LuciChat, also called Satanist Luci, a fictional dark-themed AI assistant. Use a calm, gothic, intelligent voice. Discuss Satanism, its history, philosophy, symbolism, mythology, literature, and related topics factually and respectfully. Clearly distinguish historical facts, religious beliefs, modern movements, and fiction. Do not claim to literally be Satan, a demon, or a supernatural being. Do not give dangerous instructions. Be helpful, concise, and safe.';
-function save(){localStorage.setItem('lucichat_messages',JSON.stringify(messages))}
-function render(){chat.innerHTML='';hero.style.display=messages.length?'none':'block';for(const m of messages){const box=document.createElement('div');box.className='msg '+(m.role==='user'?'user':'ai');const who=document.createElement('div');who.className='who';who.textContent=m.role==='user'?'You':'LuciChat';box.append(who);if(m.image){const p=document.createElement('div');p.textContent=m.content||'Generated image';box.append(p);const img=document.createElement('img');img.className='aiimg';img.loading='lazy';img.src=m.image;img.alt=m.content||'Generated image';box.append(img)}else{const text=document.createElement('div');text.textContent=m.content;box.append(text)}chat.append(box)}window.scrollTo(0,document.body.scrollHeight)}
+const modeText={satanic:'You are LuciChat, a fictional dark-themed Satanist AI persona. Speak in a gothic, confident style when appropriate. Discuss Satanism, its history, philosophy, symbolism, mythology, literature, and related topics accurately. Do not claim to literally be Satan, a demon, or a supernatural entity. Do not give instructions for dangerous or harmful activities.',lore:'You are LuciChat in Satanic Lore mode. Give factual, balanced explanations of Satanism, its different traditions, history, symbols, philosophy, mythology, and related literature. Clearly distinguish historical facts, beliefs, modern movements, and fiction.'};
+function save(){localStorage.setItem('lucichat_messages',JSON.stringify(messages));localStorage.setItem('luci_mode',mode)}
+function render(){chat.innerHTML='';welcome.style.display=messages.length?'none':'block';for(const m of messages){const box=document.createElement('div');box.className='msg '+(m.role==='user'?'user':'ai');const who=document.createElement('div');who.className='who';who.textContent=m.role==='user'?'You':'LuciChat';box.append(who);if(m.image){const p=document.createElement('div');p.textContent=m.content||'Generated image';box.append(p);const img=document.createElement('img');img.className='aiimg';img.loading='lazy';img.src=m.image;img.alt=m.content||'Generated image';box.append(img)}else{const text=document.createElement('div');text.textContent=m.content;box.append(text)}chat.appendChild(box)}window.scrollTo(0,document.body.scrollHeight)}
 function add(role,content,extra={}){messages.push({role,content,...extra});save();render()}
-function looksLikeImageRequest(t){return /\b(generate|create|draw|make|show|design)\b.{0,40}\b(image|picture|photo|art|drawing|portrait|wallpaper|logo)\b/i.test(t)||/\b(image|picture|photo|art|drawing|portrait|wallpaper)\b.{0,30}\b(of|for)\b/i.test(t)}
-function imagePrompt(t){return t.replace(/\b(please|can you|could you|generate|create|draw|make|show me|an image|a picture|a photo)\b/gi,' ').replace(/\s+/g,' ').trim()||'a dark gothic symbol in crimson and black, detailed digital art'}
+function looksLikeImageRequest(t){return /\b(generate|create|draw|make|show|design)\b.{0,35}\b(image|picture|photo|art|drawing|portrait|wallpaper|logo)\b/i.test(t)||/\b(image|picture|photo|art|drawing|portrait|wallpaper)\b.{0,25}\b(of|for)\b/i.test(t)}
+function imagePrompt(t){return t.replace(/\b(please|can you|could you|generate|create|draw|make|show me|an image|a picture|a photo)\b/gi,' ').replace(/\s+/g,' ').trim()||'a dark gothic symbol, detailed digital art'}
 function generateImage(prompt){const clean=imagePrompt(prompt);const url=IMAGE_ENDPOINT+encodeURIComponent(clean)+'?model=flux&width=768&height=768&nologo=true';add('assistant','Generated image: '+clean,{image:url});status.textContent='Image generated';setTimeout(()=>status.textContent='',1600)}
-async function sendMessage(){const text=input.value.trim();if(!text||send.disabled)return;input.value='';input.style.height='auto';add('user',text);send.disabled=true;status.textContent='Working...';try{if(looksLikeImageRequest(text)){generateImage(text);return}const temp={role:'assistant',content:''};messages.push(temp);render();const recent=messages.slice(-9,-1).map(m=>(m.role==='user'?'User: ':'LuciChat: ')+m.content).join('\n');const prompt=systemPrompt+'\n\nRecent conversation:\n'+recent+'\n\nUser: '+text+'\nLuciChat:';const url=TEXT_ENDPOINT+encodeURIComponent(prompt)+'?model='+encodeURIComponent(TEXT_MODEL);const res=await fetch(url,{headers:{Accept:'text/plain'}});if(!res.ok)throw new Error('AI service returned '+res.status);temp.content=(await res.text()).trim()||'I did not receive a response. Try again.';save();render();status.textContent=''}catch(err){if(messages.at(-1)?.role==='assistant'&&!messages.at(-1).content)messages.pop();save();render();status.textContent='Could not generate a response right now.';console.error(err)}finally{send.disabled=false;input.focus()}}
-function newChat(){messages=[];save();render();input.value='';input.style.height='auto';menu.classList.remove('open');sidebar.classList.remove('open');status.textContent='New chat started';setTimeout(()=>status.textContent='',1200);input.focus()}
-function showSection(name){menu.classList.remove('open');sidebar.classList.remove('open');if(name==='chat'){hero.style.display=messages.length?'none':'block';status.textContent='Chat';setTimeout(()=>status.textContent='',1000)}else if(name==='image'){input.value='Generate an image of ';input.focus();status.textContent='Image Generator ready';setTimeout(()=>status.textContent='',1200)}else if(name==='lore'){input.value='Tell me about Satanic history and philosophy';input.focus();status.textContent='Satanic Lore ready';setTimeout(()=>status.textContent='',1200)}else if(name==='settings'){status.textContent='LuciChat uses the dark Satanist Luci persona by default. No Normal AI mode.';setTimeout(()=>status.textContent='',2200)}}
-menuBtn.addEventListener('click',()=>menu.classList.toggle('open'));
-document.getElementById('personaBtn').addEventListener('click',()=>menu.classList.toggle('open'));
-document.getElementById('closeMenu').addEventListener('click',()=>menu.classList.remove('open'));
-document.getElementById('newChatBtn').addEventListener('click',newChat);
-document.getElementById('menuImageBtn').addEventListener('click',()=>showSection('image'));
-document.getElementById('menuLoreBtn').addEventListener('click',()=>showSection('lore'));
-document.getElementById('menuSettingsBtn').addEventListener('click',()=>showSection('settings'));
-document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');showSection(b.dataset.view)}));
-imageBtn.addEventListener('click',()=>{const q=input.value.trim();if(!q){input.value='Generate an image of ';input.focus();return}generateImage(q);input.value='';input.style.height='auto'});
-send.addEventListener('click',sendMessage);
-input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,150)+'px'});
-input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});
-const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;let recognition=null;if(SpeechRecognition){recognition=new SpeechRecognition();recognition.lang='en-US';recognition.interimResults=false;recognition.continuous=false;recognition.onstart=()=>{voiceBtn.classList.add('active');status.textContent='Listening...'};recognition.onresult=e=>{input.value=e.results[0][0].transcript;input.style.height='auto';input.style.height=Math.min(input.scrollHeight,150)+'px';status.textContent='Voice captured';input.focus();setTimeout(()=>status.textContent='',1200)};recognition.onerror=e=>{status.textContent=e.error==='not-allowed'?'Microphone permission was blocked.':'Voice input failed.'};recognition.onend=()=>voiceBtn.classList.remove('active');voiceBtn.addEventListener('click',()=>{try{recognition.start()}catch(e){recognition.stop()}})}else{voiceBtn.disabled=true;voiceBtn.title='Voice input is not supported in this browser'}
+async function sendMessage(){const text=input.value.trim();if(!text||send.disabled)return;input.value='';input.style.height='auto';add('user',text);send.disabled=true;status.textContent='Working...';try{if(looksLikeImageRequest(text)){generateImage(text);return}const temp={role:'assistant',content:''};messages.push(temp);render();const recent=messages.slice(-9,-1).map(m=>(m.role==='user'?'User: ':'LuciChat: ')+m.content).join('\n');const prompt=modeText[mode]+'\n\nContinue the conversation using the recent messages below.\n\n'+recent+'\nUser: '+text+'\nLuciChat:';const url=TEXT_ENDPOINT+encodeURIComponent(prompt)+'?model='+encodeURIComponent(TEXT_MODEL);const res=await fetch(url,{headers:{Accept:'text/plain'}});if(!res.ok)throw new Error('AI service returned '+res.status);temp.content=(await res.text()).trim()||'I did not get a response. Try again.';save();render();status.textContent=''}catch(err){if(messages.at(-1)?.role==='assistant'&&!messages.at(-1).content)messages.pop();save();render();status.textContent='Could not generate that right now. Try again.';console.error(err)}finally{send.disabled=false;input.focus()}}
+function newChat(){messages=[];save();render();input.value='';input.style.height='auto';moreMenu.classList.remove('open');status.textContent='New chat started';setTimeout(()=>status.textContent='',1200);input.focus()}
+function googleSearch(){const q=input.value.trim()||messages.filter(m=>m.role==='user').slice(-1)[0]?.content||'';if(!q){status.textContent='Type something to search first';input.focus();return}window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank','noopener,noreferrer');moreMenu.classList.remove('open')}
+moreBtn.addEventListener('click',()=>moreMenu.classList.toggle('open'));newChatBtn.addEventListener('click',newChat);googleBtn.addEventListener('click',googleSearch);settingsBtn.addEventListener('click',()=>{moreMenu.classList.remove('open');status.textContent='Settings are in the menu';setTimeout(()=>status.textContent='',1400)});
+modeSelect.addEventListener('change',()=>{mode=modeSelect.selectedIndex===1?'lore':'satanic';save();status.textContent=mode==='lore'?'Satanic Lore enabled':'Satanist Luci enabled';setTimeout(()=>status.textContent='',1300)});
+imageBtn.addEventListener('click',()=>{const q=input.value.trim();if(!q){status.textContent='Type what you want to generate first';input.focus();return}generateImage(q);input.value='';input.style.height='auto'});
+send.addEventListener('click',sendMessage);input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,150)+'px'});input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;let recognition=null;if(SpeechRecognition){recognition=new SpeechRecognition();recognition.lang='en-US';recognition.interimResults=false;recognition.continuous=false;recognition.onstart=()=>{voiceBtn.classList.add('active');status.textContent='Listening...'};recognition.onresult=e=>{input.value=e.results[0][0].transcript;input.style.height='auto';input.style.height=Math.min(input.scrollHeight,150)+'px';status.textContent='Voice captured';input.focus();setTimeout(()=>status.textContent='',1000)};recognition.onerror=e=>{status.textContent=e.error==='not-allowed'?'Microphone permission was blocked.':'Voice input failed. Try again.'};recognition.onend=()=>voiceBtn.classList.remove('active');voiceBtn.addEventListener('click',()=>{try{recognition.start()}catch(e){recognition.stop()}})}else{voiceBtn.disabled=true}
 render();
 </script>
 </body>
