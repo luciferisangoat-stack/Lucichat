@@ -25,6 +25,17 @@ jobs:
         uses: actions/checkout@v4
       - name: Configure Pages
         uses: actions/configure-pages@v5
+      - name: Inject local AI fallback
+        run: python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          tag = '<script src="./luci-fix.js"></script>'
+          if tag not in s:
+              s = s.replace('</head>', tag + '\n</head>', 1)
+              p.write_text(s, encoding='utf-8')
+          print('Local AI fallback injected:', tag in s)
+          PY
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
