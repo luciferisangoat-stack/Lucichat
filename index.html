@@ -222,8 +222,11 @@ button:disabled{
   margin-top:10px;
 }
 
-@media(max-width:600px){
+.retry-btn{
+  margin-top:10px;
+}
 
+@media(max-width:600px){
   header{
     padding:12px;
   }
@@ -244,7 +247,6 @@ button:disabled{
   .composer{
     padding:8px;
   }
-
 }
 </style>
 </head>
@@ -252,7 +254,6 @@ button:disabled{
 <body>
 
 <header>
-
   <div>
     <div class="logo">🤖 LuciChat</div>
     <div class="subtitle">Your personal AI assistant</div>
@@ -261,7 +262,6 @@ button:disabled{
   <button class="creator-btn" id="creatorBtn">
     Creator
   </button>
-
 </header>
 
 <div id="status">
@@ -271,13 +271,11 @@ button:disabled{
 <main id="chat">
 
   <div class="message assistant">
-
     <div class="bubble">
-      👋 Hi! I'm LuciChat.
+👋 Hi! I'm LuciChat.
 
-      I'm trying to start my local AI engine. This may take a little while the first time because the AI model has to download.
+I'm starting my local AI engine. The first startup downloads the AI model to this device.
     </div>
-
   </div>
 
   <div id="progress" class="progress"></div>
@@ -285,7 +283,6 @@ button:disabled{
 </main>
 
 <div class="composer">
-
   <div class="composer-inner">
 
     <input
@@ -301,7 +298,6 @@ button:disabled{
     </button>
 
   </div>
-
 </div>
 
 <div class="modal" id="creatorModal">
@@ -341,9 +337,9 @@ button:disabled{
 
 <script type="module">
 
-/* =========================
-   LUCICHAT SETTINGS
-   ========================= */
+/* =====================================================
+   LUCICHAT
+   ===================================================== */
 
 const MODEL =
   "SmolLM2-360M-Instruct-q4f32_1-MLC";
@@ -355,32 +351,31 @@ const CREATOR_PIN =
   "1234";
 
 
-/* =========================
-   APP STATE
-   ========================= */
+/* =====================================================
+   STATE
+   ===================================================== */
 
 let engine = null;
-
 let starting = false;
-
 let startupFinished = false;
 
 
-const messages = [
+/* =====================================================
+   CHAT HISTORY
+   ===================================================== */
 
+const messages = [
   {
     role:"system",
-
     content:
       "You are LuciChat, a friendly personal AI assistant. Be helpful, concise, honest, and safe."
   }
-
 ];
 
 
-/* =========================
+/* =====================================================
    ELEMENTS
-   ========================= */
+   ===================================================== */
 
 const statusEl =
   document.getElementById("status");
@@ -413,9 +408,9 @@ const pinEl =
   document.getElementById("pin");
 
 
-/* =========================
+/* =====================================================
    ADD MESSAGE
-   ========================= */
+   ===================================================== */
 
 function addMessage(role,text){
 
@@ -424,7 +419,6 @@ function addMessage(role,text){
 
   wrapper.className =
     "message " + role;
-
 
   const bubble =
     document.createElement("div");
@@ -435,41 +429,31 @@ function addMessage(role,text){
   bubble.textContent =
     text;
 
-
   wrapper.appendChild(bubble);
 
   chatEl.appendChild(wrapper);
 
-
   window.scrollTo({
-
     top:document.body.scrollHeight,
-
     behavior:"smooth"
-
   });
 
-
   return bubble;
-
 }
 
 
-/* =========================
-   ERROR DISPLAY
-   ========================= */
+/* =====================================================
+   SHOW ERROR
+   ===================================================== */
 
 function showError(error){
 
   const old =
-    document.getElementById(
-      "startupError"
-    );
+    document.getElementById("startupError");
 
   if(old){
     old.remove();
   }
-
 
   const box =
     document.createElement("div");
@@ -480,19 +464,16 @@ function showError(error){
   box.className =
     "error";
 
-
-  const message =
-    error && error.message
-      ? error.message
-      : String(error);
-
+  let message =
+    error?.message ||
+    String(error);
 
   box.textContent =
 `AI startup error
 
 ${message}
 
-Debug:
+Debug information:
 
 Model:
 ${MODEL}
@@ -509,36 +490,45 @@ ${!!navigator.gpu}
 Browser:
 ${navigator.userAgent}`;
 
-
   chatEl.appendChild(box);
 
+  const retry =
+    document.createElement("button");
+
+  retry.className =
+    "retry-btn";
+
+  retry.textContent =
+    "Retry";
+
+  retry.onclick =
+    function(){
+
+      retry.remove();
+      box.remove();
+
+      startAI();
+
+    };
+
+  chatEl.appendChild(retry);
 }
 
 
-/* =========================
+/* =====================================================
    START AI
-   ========================= */
+   ===================================================== */
 
 async function startAI(){
 
-  if(starting){
+  if(starting || startupFinished){
     return;
   }
-
-  if(startupFinished){
-    return;
-  }
-
 
   starting = true;
 
-
-  sendBtn.disabled =
-    true;
-
-  inputEl.disabled =
-    true;
-
+  sendBtn.disabled = true;
+  inputEl.disabled = true;
 
   statusEl.textContent =
     "Checking your device...";
@@ -549,7 +539,9 @@ async function startAI(){
 
   try{
 
-    /* HTTPS CHECK */
+    /* -----------------------------------------------
+       HTTPS
+       ----------------------------------------------- */
 
     if(!window.isSecureContext){
 
@@ -560,7 +552,9 @@ async function startAI(){
     }
 
 
-    /* WEBGPU CHECK */
+    /* -----------------------------------------------
+       WEBGPU
+       ----------------------------------------------- */
 
     if(!navigator.gpu){
 
@@ -570,14 +564,11 @@ async function startAI(){
 
     }
 
-
     statusEl.textContent =
       "Checking WebGPU...";
 
-
     const adapter =
       await navigator.gpu.requestAdapter();
-
 
     if(!adapter){
 
@@ -588,14 +579,17 @@ async function startAI(){
     }
 
 
-    /* LOAD WEBLLM */
+    /* -----------------------------------------------
+       LOAD WEBLLM
+       ----------------------------------------------- */
 
     statusEl.textContent =
       "Loading WebLLM...";
 
+    progressEl.textContent =
+      "Connecting to the local AI engine...";
 
     let WebLLM;
-
 
     try{
 
@@ -605,18 +599,23 @@ async function startAI(){
     }catch(error){
 
       throw new Error(
-        "Could not load WebLLM.\n\n" +
-        (error?.message || error)
+        "WebLLM could not be downloaded.\n\n" +
+        "Check your internet connection and reload the page.\n\n" +
+        (error?.message || String(error))
       );
 
     }
 
 
-    /* CHECK MODEL */
+    /* -----------------------------------------------
+       VERIFY PREBUILT MODEL
+       ----------------------------------------------- */
+
+    statusEl.textContent =
+      "Preparing AI model...";
 
     const modelList =
       WebLLM.prebuiltAppConfig?.model_list || [];
-
 
     const modelInfo =
       modelList.find(
@@ -624,26 +623,27 @@ async function startAI(){
           item.model_id === MODEL
       );
 
-
     if(!modelInfo){
 
       throw new Error(
-        "This WebLLM version does not contain the selected model:\n\n" +
+        "The installed WebLLM package does not contain:\n\n" +
         MODEL
       );
 
     }
 
 
-    /* MODEL DOWNLOAD */
-
-    statusEl.textContent =
-      "Downloading local AI model...";
-
+    /* -----------------------------------------------
+       MODEL INFO
+       ----------------------------------------------- */
 
     progressEl.textContent =
-      "First-time setup can take a while. Keep LuciChat open.";
+      "AI model found. Starting download...";
 
+
+    /* -----------------------------------------------
+       CREATE ENGINE
+       ----------------------------------------------- */
 
     engine =
       await WebLLM.CreateMLCEngine(
@@ -659,6 +659,10 @@ async function startAI(){
                 return;
               }
 
+              console.log(
+                "WebLLM:",
+                progress
+              );
 
               if(progress.text){
 
@@ -667,7 +671,7 @@ async function startAI(){
 
               }
 
-              else if(
+              if(
                 typeof progress.progress ===
                 "number"
               ){
@@ -676,7 +680,6 @@ async function startAI(){
                   Math.round(
                     progress.progress * 100
                   );
-
 
                 progressEl.textContent =
                   "Downloading AI model: " +
@@ -687,107 +690,73 @@ async function startAI(){
 
             },
 
-
-          logLevel:"ERROR"
+          logLevel:"INFO"
 
         }
 
       );
 
 
-    /* READY */
+    /* -----------------------------------------------
+       READY
+       ----------------------------------------------- */
 
-    startupFinished =
-      true;
-
-    starting =
-      false;
-
+    startupFinished = true;
+    starting = false;
 
     statusEl.textContent =
       "🟢 LuciChat is ready";
 
-
     progressEl.textContent =
       "Local AI is running on this device.";
 
-
-    inputEl.disabled =
-      false;
-
-    sendBtn.disabled =
-      false;
-
+    inputEl.disabled = false;
+    sendBtn.disabled = false;
 
     inputEl.placeholder =
       "Type a message...";
 
-
     inputEl.focus();
-
 
   }
 
+
   catch(error){
 
-    starting =
-      false;
+    starting = false;
 
+    engine = null;
 
     statusEl.textContent =
       "🔴 LuciChat could not start";
 
-
     progressEl.textContent =
       "Tap Retry to try again.";
 
+    console.error(
+      "LuciChat startup error:",
+      error
+    );
 
     showError(error);
-
-
-    const retry =
-      document.createElement("button");
-
-
-    retry.textContent =
-      "Retry";
-
-
-    retry.style.marginTop =
-      "10px";
-
-
-    retry.onclick =
-      function(){
-
-        retry.remove();
-
-        startAI();
-
-      };
-
-
-    chatEl.appendChild(retry);
 
   }
 
 }
 
 
-/* =========================
+/* =====================================================
    SEND MESSAGE
-   ========================= */
+   ===================================================== */
 
 async function sendMessage(){
 
   const text =
     inputEl.value.trim();
 
-
   if(!text){
     return;
   }
-
 
   if(!engine){
 
@@ -800,32 +769,20 @@ async function sendMessage(){
 
   }
 
-
   addMessage(
     "user",
     text
   );
 
+  inputEl.value = "";
 
-  inputEl.value =
-    "";
-
-
-  inputEl.disabled =
-    true;
-
-  sendBtn.disabled =
-    true;
-
+  inputEl.disabled = true;
+  sendBtn.disabled = true;
 
   messages.push({
-
     role:"user",
-
     content:text
-
   });
-
 
   const thinking =
     addMessage(
@@ -847,30 +804,26 @@ async function sendMessage(){
 
       });
 
-
     const answer =
       reply?.choices?.[0]?.message?.content ||
       "I didn't get a response.";
 
-
     thinking.textContent =
       answer;
 
-
     messages.push({
-
       role:"assistant",
-
       content:answer
-
     });
 
   }
 
   catch(error){
 
-    console.error(error);
-
+    console.error(
+      "Generation error:",
+      error
+    );
 
     thinking.textContent =
       "Sorry, something went wrong while generating the response.";
@@ -878,21 +831,17 @@ async function sendMessage(){
   }
 
 
-  inputEl.disabled =
-    false;
-
-  sendBtn.disabled =
-    false;
-
+  inputEl.disabled = false;
+  sendBtn.disabled = false;
 
   inputEl.focus();
 
 }
 
 
-/* =========================
+/* =====================================================
    SEND BUTTON
-   ========================= */
+   ===================================================== */
 
 sendBtn.addEventListener(
   "click",
@@ -900,9 +849,9 @@ sendBtn.addEventListener(
 );
 
 
-/* =========================
+/* =====================================================
    ENTER KEY
-   ========================= */
+   ===================================================== */
 
 inputEl.addEventListener(
   "keydown",
@@ -923,9 +872,9 @@ inputEl.addEventListener(
 );
 
 
-/* =========================
+/* =====================================================
    CREATOR BUTTON
-   ========================= */
+   ===================================================== */
 
 creatorBtn.addEventListener(
   "click",
@@ -943,9 +892,9 @@ creatorBtn.addEventListener(
 );
 
 
-/* =========================
+/* =====================================================
    CLOSE CREATOR
-   ========================= */
+   ===================================================== */
 
 closeCreator.addEventListener(
   "click",
@@ -958,18 +907,15 @@ closeCreator.addEventListener(
 );
 
 
-/* =========================
+/* =====================================================
    CLOSE MODAL OUTSIDE
-   ========================= */
+   ===================================================== */
 
 creatorModal.addEventListener(
   "click",
   function(event){
 
-    if(
-      event.target ===
-      creatorModal
-    ){
+    if(event.target === creatorModal){
 
       creatorModal.style.display =
         "none";
@@ -980,32 +926,26 @@ creatorModal.addEventListener(
 );
 
 
-/* =========================
+/* =====================================================
    UNLOCK CREATOR
-   ========================= */
+   ===================================================== */
 
 unlockCreator.addEventListener(
   "click",
   function(){
 
-    if(
-      pinEl.value ===
-      CREATOR_PIN
-    ){
+    if(pinEl.value === CREATOR_PIN){
 
       localStorage.setItem(
         "luciCreator",
         "true"
       );
 
-
       creatorBtn.textContent =
         "Creator ✓";
 
-
       creatorModal.style.display =
         "none";
-
 
       addMessage(
         "system",
@@ -1016,8 +956,7 @@ unlockCreator.addEventListener(
 
     else{
 
-      pinEl.value =
-        "";
+      pinEl.value = "";
 
       pinEl.placeholder =
         "Incorrect PIN";
@@ -1028,9 +967,9 @@ unlockCreator.addEventListener(
 );
 
 
-/* =========================
-   REMEMBER CREATOR MODE
-   ========================= */
+/* =====================================================
+   REMEMBER CREATOR
+   ===================================================== */
 
 if(
   localStorage.getItem(
@@ -1044,9 +983,9 @@ if(
 }
 
 
-/* =========================
+/* =====================================================
    START
-   ========================= */
+   ===================================================== */
 
 startAI();
 
