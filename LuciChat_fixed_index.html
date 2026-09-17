@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LuciChat — Local AI</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0b1020;color:#eef2ff;font-family:system-ui,-apple-system,sans-serif}
+header{padding:16px;border-bottom:1px solid #26304a;display:flex;align-items:center;justify-content:space-between;background:#0b1020;position:sticky;top:0;z-index:2}
+.brand{font-size:25px;font-weight:800}.sub{color:#8d99b5;font-size:14px}.creator{color:#aab8ff;font-weight:700}
+button{border:1px solid #34415f;background:#121a2d;color:#fff;border-radius:14px;padding:10px 14px;font-weight:700}
+main{max-width:760px;margin:auto;padding:16px 14px 105px}.msg{max-width:90%;padding:14px 16px;border-radius:20px;margin:12px 0;font-size:17px;line-height:1.45;white-space:pre-wrap}.user{margin-left:auto;background:#38599e}.bot{background:#182137}
+.composer{position:fixed;bottom:0;left:0;right:0;background:#0b1020;border-top:1px solid #26304a;padding:10px}.row{display:flex;gap:8px;max-width:760px;margin:auto}.row input{flex:1;min-width:0;background:#151e33;border:1px solid #34415f;color:white;border-radius:16px;padding:14px;font-size:16px}.send{background:#405fa8}
+#statusbar{font-size:13px;color:#8d99b5;padding:8px 0}.good{color:#75e0a5}.bad{color:#ff9b9b}.modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:20px}.card{background:#111a2d;border:1px solid #34415f;border-radius:20px;padding:20px;width:min(420px,100%)}.card input{width:100%;padding:13px;border-radius:12px;background:#0b1020;color:#fff;border:1px solid #34415f;margin:10px 0}
+</style>
+</head>
+<body>
+<header>
+ <div><div class="brand">✦ LuciChat</div><div class="sub">Your personal AI • runs locally</div></div>
+ <div><span class="creator" id="creatorStatus">Creator mode locked</span> <button onclick="openCreator()">Creator</button></div>
+</header>
+<main id="chat">
+ <div id="statusbar">Checking your browser for WebGPU…</div>
+ <div class="msg bot" id="welcome">Hi! I'm LuciChat. 💙<br><br>This version uses an AI model directly in the browser. No cloud API key is put into this page.</div>
+</main>
+<div class="composer"><div class="row"><input id="input" placeholder="Message LuciChat…" autocomplete="off"><button class="send" id="sendBtn" onclick="send()">Send</button></div></div>
+
+<div class="modal" id="modal"><div class="card">
+<h2>Creator authorization</h2><p>Enter your creator PIN.</p>
+<input id="pin" type="password" inputmode="numeric" maxlength="12" placeholder="PIN">
+<button onclick="authorize()">Authorize me</button> <button onclick="closeCreator()">Cancel</button>
+<p id="result"></p>
+</div></div>
+
+<script type="module">
+import { CreateMLCEngine, prebuiltAppConfig } from "https://esm.run/@mlc-ai/web-llm";
+
+const MODEL = "Llama-3.2-1B-Instruct-q4f32_1-MLC";
+const appConfig = { ...prebuiltAppConfig, cacheBackend: "indexeddb" };
+const PIN = "1234";
+let engine = null;
+let messages = [
+ {role:"system", content:"You are LuciChat, a friendly personal AI assistant. Be helpful, concise, and honest. The user is the creator of this app."}
+];
+
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const sendBtn = document.getElementById("sendBtn");
+const statusbar = document.getElementById("statusbar");
+
+function add(text, cls){
+ const d=document.createElement("div"); d.className="msg "+cls; d.textContent=text;
+ chat.appendChild(d); window.scrollTo(0,document.body.scrollHeight);
+ return d;
+}
+function setStatus(text, cls=""){statusbar.className=cls;statusbar.textContent=text}
+
+async function startAI(){
+ if(!("gpu" in navigator)){setStatus("WebGPU isn't available in this browser. LuciChat can still show the interface, but local AI can't start here.","bad"); return;}
+ try{
+   setStatus("Loading LuciChat's local AI model… the first download is large and may take a while.");
+   engine = await CreateMLCEngine(MODEL,{
+     appConfig,
+     initProgressCallback:(p)=> {
+       if(p && p.text) setStatus("AI setup: "+p.text);
+     }
+   });
+   setStatus("LuciChat AI is ready ✓","good");
+   document.getElementById("welcome").textContent="I'm ready. 🤖💙 Ask me anything!";
+ }catch(e){
+   console.error(e);
+   setStatus("AI could not start: "+(e?.message||e),"bad");
+   add("LuciChat could not download the AI model. The model cache now uses IndexedDB for better Android compatibility. Check Wi-Fi, then refresh and try again.","bot");
+ }
+}
+
+async function send(){
+ const text=input.value.trim(); if(!text) return;
+ add(text,"user"); input.value=""; sendBtn.disabled=true;
+ if(!engine){add("I'm still loading the local AI. Please wait a moment and try again.","bot"); sendBtn.disabled=false; return;}
+ messages.push({role:"user",content:text});
+ const bubble=add("…","bot");
+ try{
+   const res=await engine.chat.completions.create({messages,temperature:.7,max_tokens:300});
+   const answer=res.choices?.[0]?.message?.content || "I couldn't generate a response.";
+   bubble.textContent=answer;
+   messages.push({role:"assistant",content:answer});
+ }catch(e){
+   bubble.textContent="Sorry — the local model hit an error. Try sending the message again.";
+   console.error(e);
+ }
+ sendBtn.disabled=false;
+}
+
+input.addEventListener("keydown",e=>{if(e.key==="Enter")send()});
+window.send=send;
+
+window.openCreator=()=>{document.getElementById("modal").style.display="flex";document.getElementById("pin").focus()};
+window.closeCreator=()=>{document.getElementById("modal").style.display="none";document.getElementById("result").textContent=""};
+window.authorize=()=>{
+ const r=document.getElementById("result");
+ if(document.getElementById("pin").value===PIN){
+   localStorage.setItem("luciCreator","yes");
+   document.getElementById("creatorStatus").textContent="Creator: You ✓";
+   r.className="good";r.textContent="Authorized! 👑";
+   setTimeout(window.closeCreator,700);
+ }else{r.className="bad";r.textContent="Wrong PIN."}
+};
+if(localStorage.getItem("luciCreator")==="yes")document.getElementById("creatorStatus").textContent="Creator: You ✓";
+
+startAI();
+</script>
+</body>
+</html>
