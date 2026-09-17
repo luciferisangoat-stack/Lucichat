@@ -1,186 +1,252 @@
-<script type="module">
-import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LuciChat — Local AI</title>
 
-const MODEL = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
-
-let engine = null;
-
-let messages = [
-  {
-    role: "system",
-    content:
-      "You are LuciChat, a friendly personal AI assistant. Be helpful, concise, and honest."
-  }
-];
-
-const chat = document.getElementById("chat");
-const input = document.getElementById("input");
-const sendBtn = document.getElementById("sendBtn");
-const statusbar = document.getElementById("statusbar");
-
-function add(text, cls) {
-  const d = document.createElement("div");
-  d.className = "msg " + cls;
-  d.textContent = text;
-  chat.appendChild(d);
-  window.scrollTo(0, document.body.scrollHeight);
-  return d;
+<style>
+* {
+  box-sizing: border-box;
 }
 
-function setStatus(text, cls = "") {
-  statusbar.className = cls;
-  statusbar.textContent = text;
+body {
+  margin: 0;
+  background: #0b1020;
+  color: #eef2ff;
+  font-family: system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
 }
 
-async function startAI() {
-  if (!window.isSecureContext) {
-    setStatus("LuciChat must be opened over HTTPS.", "bad");
-    return;
-  }
-
-  if (!("gpu" in navigator)) {
-    setStatus(
-      "This browser does not provide WebGPU. Local AI cannot run here.",
-      "bad"
-    );
-    add(
-      "Your phone can open LuciChat, but this browser doesn't provide the graphics feature needed to run the local AI.",
-      "bot"
-    );
-    return;
-  }
-
-  try {
-    sendBtn.disabled = true;
-
-    setStatus("Starting LuciChat AI…");
-
-    engine = await CreateMLCEngine(MODEL, {
-      initProgressCallback: (p) => {
-        if (p && p.text) {
-          setStatus("AI setup: " + p.text);
-        }
-      },
-      logLevel: "ERROR"
-    });
-
-    setStatus("LuciChat AI is ready ✓", "good");
-
-    document.getElementById("welcome").textContent =
-      "I'm ready. 🤖💙 Ask me anything!";
-
-    sendBtn.disabled = false;
-
-  } catch (e) {
-    console.error("WebLLM error:", e);
-
-    sendBtn.disabled = false;
-
-    const error = String(e?.message || e);
-
-    setStatus("Local AI failed to start.", "bad");
-
-    add(
-      "I couldn't start the local AI on this device. The website itself is working, but the browser couldn't load the AI model.",
-      "bot"
-    );
-
-    console.error(error);
-  }
+header {
+  padding: 16px;
+  border-bottom: 1px solid #26304a;
+  background: #11182d;
+  position: sticky;
+  top: 0;
+  z-index: 5;
 }
 
-async function send() {
-  const text = input.value.trim();
-
-  if (!text) return;
-
-  add(text, "user");
-  input.value = "";
-
-  if (!engine) {
-    add(
-      "The AI hasn't finished starting yet. Please wait until it says 'LuciChat AI is ready'.",
-      "bot"
-    );
-    return;
-  }
-
-  sendBtn.disabled = true;
-
-  messages.push({
-    role: "user",
-    content: text
-  });
-
-  const bubble = add("Thinking…", "bot");
-
-  try {
-    const res = await engine.chat.completions.create({
-      messages,
-      temperature: 0.7,
-      max_tokens: 300
-    });
-
-    const answer =
-      res.choices?.[0]?.message?.content ||
-      "I couldn't generate a response.";
-
-    bubble.textContent = answer;
-
-    messages.push({
-      role: "assistant",
-      content: answer
-    });
-
-  } catch (e) {
-    console.error(e);
-    bubble.textContent =
-      "Sorry — the local AI had an error. Please try again.";
-  }
-
-  sendBtn.disabled = false;
+.title {
+  font-size: 22px;
+  font-weight: 700;
 }
 
-input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    send();
-  }
-});
-
-window.send = send;
-
-window.openCreator = () => {
-  document.getElementById("modal").style.display = "flex";
-  document.getElementById("pin").focus();
-};
-
-window.closeCreator = () => {
-  document.getElementById("modal").style.display = "none";
-  document.getElementById("result").textContent = "";
-};
-
-window.authorize = () => {
-  const r = document.getElementById("result");
-
-  if (document.getElementById("pin").value === "1234") {
-    localStorage.setItem("luciCreator", "yes");
-    document.getElementById("creatorStatus").textContent =
-      "Creator: You ✓";
-
-    r.className = "good";
-    r.textContent = "Authorized! 👑";
-
-    setTimeout(window.closeCreator, 700);
-  } else {
-    r.className = "bad";
-    r.textContent = "Wrong PIN.";
-  }
-};
-
-if (localStorage.getItem("luciCreator") === "yes") {
-  document.getElementById("creatorStatus").textContent =
-    "Creator: You ✓";
+.subtitle {
+  color: #9aa7c7;
+  font-size: 13px;
+  margin-top: 3px;
 }
 
-startAI();
- </script>
+#statusbar {
+  padding: 9px 16px;
+  font-size: 13px;
+  background: #151d35;
+  color: #aeb9d6;
+}
+
+#statusbar.good {
+  color: #72f5a0;
+}
+
+#statusbar.bad {
+  color: #ff7b8a;
+}
+
+#chat {
+  padding: 18px;
+  padding-bottom: 110px;
+  max-width: 800px;
+  margin: auto;
+}
+
+.msg {
+  padding: 12px 14px;
+  margin: 10px 0;
+  border-radius: 14px;
+  max-width: 85%;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.user {
+  background: #315cff;
+  margin-left: auto;
+}
+
+.bot {
+  background: #18213b;
+  border: 1px solid #293653;
+  margin-right: auto;
+}
+
+#welcome {
+  text-align: center;
+  color: #aeb9d6;
+  margin: 40px 0;
+}
+
+#composer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px;
+  background: #0e1529;
+  border-top: 1px solid #26304a;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+#input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #35415f;
+  background: #151e36;
+  color: white;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 16px;
+  outline: none;
+}
+
+button {
+  border: 0;
+  border-radius: 12px;
+  padding: 0 16px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#sendBtn {
+  background: #4169ff;
+  color: white;
+}
+
+#sendBtn:disabled {
+  opacity: .5;
+}
+
+#creatorBtn {
+  position: fixed;
+  right: 12px;
+  top: 10px;
+  background: transparent;
+  color: #9aa7c7;
+  padding: 6px;
+  font-size: 12px;
+}
+
+#modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modalbox {
+  width: calc(100% - 40px);
+  max-width: 350px;
+  background: #151e36;
+  border: 1px solid #35415f;
+  border-radius: 18px;
+  padding: 20px;
+}
+
+.modalbox h2 {
+  margin-top: 0;
+}
+
+#pin {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #35415f;
+  background: #0c1326;
+  color: white;
+  font-size: 16px;
+  margin: 10px 0;
+}
+
+.modalbuttons {
+  display: flex;
+  gap: 8px;
+}
+
+.modalbuttons button {
+  padding: 11px 14px;
+}
+
+#authorizeBtn {
+  background: #4169ff;
+  color: white;
+}
+
+#closeBtn {
+  background: #293653;
+  color: white;
+}
+
+#result {
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+#creatorStatus {
+  font-size: 12px;
+  color: #72f5a0;
+  margin-top: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="title">🤖 LuciChat</div>
+  <div class="subtitle">Your personal AI assistant</div>
+  <div id="creatorStatus"></div>
+
+  <button id="creatorBtn">Creator</button>
+</header>
+
+<div id="statusbar">Starting LuciChat…</div>
+
+<main id="chat">
+  <div id="welcome">Loading LuciChat AI… 🤖💙</div>
+</main>
+
+<div id="composer">
+  <input
+    id="input"
+    type="text"
+    placeholder="Message LuciChat..."
+    autocomplete="off"
+  >
+  <button id="sendBtn" disabled>Send</button>
+</div>
+
+<div id="modal">
+  <div class="modalbox">
+    <h2>👑 Creator Access</h2>
+
+    <input
+      id="pin"
+      type="password"
+      inputmode="numeric"
+      placeholder="Enter PIN"
+    >
+
+    <div class="modalbuttons">
+      <button id="authorizeBtn">Unlock</button>
+      <button id="closeBtn">Cancel</button>
+    </div>
+
+    <div id="result"></div>
+  </div>
+</
