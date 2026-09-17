@@ -3,359 +3,742 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LuciChat — WebLLM Diagnostic</title>
+<meta name="theme-color" content="#0b1020">
+
+<title>LuciChat — Local AI</title>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
 
 body{
   margin:0;
-  padding:20px;
   background:#0b1020;
   color:#eef2ff;
-  font-family:system-ui,-apple-system,sans-serif;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+header{
+  padding:18px;
+  border-bottom:1px solid #26304a;
+  background:#0e1529;
 }
 
 h1{
-  margin-top:0;
+  margin:0;
   font-size:24px;
 }
 
-.card{
-  background:#151c31;
-  border:1px solid #2a3555;
-  border-radius:14px;
+.subtitle{
+  margin-top:5px;
+  color:#9ca8c7;
+  font-size:14px;
+}
+
+main{
+  max-width:800px;
+  margin:auto;
   padding:16px;
-  margin:14px 0;
 }
 
-.test{
-  padding:14px;
-  margin:10px 0;
-  border-radius:10px;
-  background:#0e1528;
-  border:1px solid #293653;
-}
-
-.name{
-  font-weight:700;
-  margin-bottom:6px;
+.card{
+  background:#111a30;
+  border:1px solid #26304a;
+  border-radius:16px;
+  padding:16px;
+  margin-bottom:16px;
 }
 
 .status{
-  font-size:14px;
-  word-break:break-word;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:12px;
 }
 
-.ok{
-  color:#72e6a0;
+.dot{
+  width:11px;
+  height:11px;
+  border-radius:50%;
+  background:#777;
 }
 
-.bad{
-  color:#ff7777;
+.dot.ready{
+  background:#35d07f;
 }
 
-.warn{
-  color:#ffd166;
+.dot.loading{
+  background:#f4c542;
+}
+
+.dot.error{
+  background:#ff5c69;
 }
 
 button{
   width:100%;
-  padding:14px;
   border:0;
-  border-radius:10px;
+  border-radius:12px;
+  padding:13px 16px;
+  font-size:16px;
+  font-weight:600;
   background:#5865f2;
   color:white;
-  font-size:16px;
-  font-weight:700;
-  margin-top:8px;
+  cursor:pointer;
 }
 
-pre{
+button:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+#progress{
+  margin-top:12px;
+  color:#aab5d3;
+  font-size:14px;
+  min-height:20px;
+}
+
+#chat{
+  min-height:180px;
+  max-height:55vh;
+  overflow-y:auto;
+  padding:4px;
+}
+
+.message{
+  margin:10px 0;
+  padding:12px 14px;
+  border-radius:14px;
+  line-height:1.5;
   white-space:pre-wrap;
-  word-break:break-word;
-  background:#080d19;
-  padding:12px;
-  border-radius:10px;
+  overflow-wrap:anywhere;
+}
+
+.user{
+  background:#26345d;
+  margin-left:10%;
+}
+
+.assistant{
+  background:#18233d;
+  margin-right:10%;
+}
+
+.label{
   font-size:12px;
-  overflow:auto;
+  color:#8f9bb9;
+  margin-bottom:4px;
+}
+
+textarea{
+  width:100%;
+  min-height:90px;
+  resize:vertical;
+  margin-top:12px;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid #303d5d;
+  background:#0b1224;
+  color:#eef2ff;
+  font:inherit;
+  outline:none;
+}
+
+textarea:focus{
+  border-color:#5865f2;
+}
+
+#sendButton{
+  margin-top:10px;
+}
+
+.error{
+  color:#ff7b86;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+
+.info{
+  color:#8f9bb9;
+  font-size:13px;
+  line-height:1.5;
+}
+
+small{
+  color:#7f8bab;
 }
 </style>
 </head>
 
 <body>
 
-<h1>🔧 LuciChat WebLLM Diagnostic</h1>
+<header>
+  <h1>🤖 LuciChat</h1>
+  <div class="subtitle">
+    Private local AI running in your browser
+  </div>
+</header>
 
-<div class="card">
-  <div>
-    This page checks the things LuciChat needs before loading the AI.
+<main>
+
+  <div class="card">
+
+    <div class="status">
+      <div id="statusDot" class="dot"></div>
+      <strong id="statusText">AI is not loaded</strong>
+    </div>
+
+    <button id="loadButton">
+      🚀 Load AI
+    </button>
+
+    <div id="progress">
+      Ready to load the local AI model.
+    </div>
+
   </div>
 
-  <button onclick="runTests()">Run Tests Again</button>
-</div>
+  <div class="card">
 
-<div id="tests"></div>
+    <div id="chat">
+      <div class="message assistant">
+        <div class="label">LuciChat</div>
+        Load the AI above to start chatting.
+      </div>
+    </div>
 
-<div class="card">
-  <h3>Technical information</h3>
-  <pre id="info">Collecting...</pre>
-</div>
+    <textarea
+      id="prompt"
+      placeholder="Type your message..."
+      disabled
+    ></textarea>
 
-<script>
+    <button id="sendButton" disabled>
+      Send
+    </button>
+
+  </div>
+
+  <div class="card">
+    <div class="info">
+      <strong>System information</strong><br><br>
+
+      Model:
+      <span id="modelInfo">SmolLM2-360M-Instruct-q4f32_1-MLC</span>
+      <br>
+
+      WebGPU:
+      <span id="gpuInfo">Checking...</span>
+      <br>
+
+      WebLLM:
+      <span id="webllmInfo">Not loaded</span>
+
+      <br><br>
+
+      <small>
+        The model runs locally in your browser using WebGPU.
+        The first load may take a while because the model files
+        have to be downloaded.
+      </small>
+    </div>
+  </div>
+
+</main>
+
+<script type="module">
+
+/* =========================================================
+   LUCI CHAT
+   ========================================================= */
 
 const MODEL =
   "SmolLM2-360M-Instruct-q4f32_1-MLC";
 
-const HF_MODEL =
-  "https://huggingface.co/mlc-ai/" + MODEL;
-
-const WEBLLM_CDN =
+const WEBLLM_URL =
   "https://esm.run/@mlc-ai/web-llm@0.2.85";
 
-const tests = document.getElementById("tests");
+let webllm = null;
+let engine = null;
 
-function addTest(name, status, type="warn"){
-  const div = document.createElement("div");
-  div.className = "test";
+let loading = false;
+let generating = false;
 
-  div.innerHTML = `
-    <div class="name">${name}</div>
-    <div class="status ${type}">${status}</div>
-  `;
 
-  tests.appendChild(div);
+/* =========================================================
+   ELEMENTS
+   ========================================================= */
+
+const loadButton =
+  document.getElementById("loadButton");
+
+const sendButton =
+  document.getElementById("sendButton");
+
+const promptBox =
+  document.getElementById("prompt");
+
+const chat =
+  document.getElementById("chat");
+
+const progress =
+  document.getElementById("progress");
+
+const statusText =
+  document.getElementById("statusText");
+
+const statusDot =
+  document.getElementById("statusDot");
+
+const gpuInfo =
+  document.getElementById("gpuInfo");
+
+const webllmInfo =
+  document.getElementById("webllmInfo");
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+function setStatus(text, type = "") {
+
+  statusText.textContent = text;
+
+  statusDot.className = "dot";
+
+  if(type){
+    statusDot.classList.add(type);
+  }
 }
 
-async function testFetch(url, name){
 
-  addTest(name, "⏳ Testing...");
+/* =========================================================
+   CHAT MESSAGE
+   ========================================================= */
 
-  try{
+function addMessage(role, text) {
 
-    const response = await fetch(url, {
-      method:"GET",
-      cache:"no-store"
-    });
+  const message =
+    document.createElement("div");
 
-    if(response.ok){
+  message.className =
+    "message " +
+    (role === "user"
+      ? "user"
+      : "assistant");
 
-      const text = await response.text();
+  const label =
+    document.createElement("div");
 
-      addTest(
-        name,
-        "✅ SUCCESS — HTTP " +
-        response.status +
-        " — " +
-        text.length +
-        " bytes received",
-        "ok"
+  label.className = "label";
+
+  label.textContent =
+    role === "user"
+      ? "You"
+      : "LuciChat";
+
+  const content =
+    document.createElement("div");
+
+  content.textContent = text;
+
+  message.appendChild(label);
+  message.appendChild(content);
+
+  chat.appendChild(message);
+
+  chat.scrollTop = chat.scrollHeight;
+
+  return content;
+}
+
+
+/* =========================================================
+   CHECK WEBGPU
+   ========================================================= */
+
+async function checkWebGPU(){
+
+  if(!navigator.gpu){
+
+    gpuInfo.textContent =
+      "Not available";
+
+    throw new Error(
+      "WebGPU is not available in this browser."
+    );
+  }
+
+  const adapter =
+    await navigator.gpu.requestAdapter();
+
+  if(!adapter){
+
+    gpuInfo.textContent =
+      "No adapter found";
+
+    throw new Error(
+      "WebGPU exists, but no compatible GPU adapter was found."
+    );
+  }
+
+  gpuInfo.textContent =
+    "Available ✓";
+
+  return adapter;
+}
+
+
+/* =========================================================
+   LOAD AI
+   ========================================================= */
+
+async function loadAI(){
+
+  if(loading || engine){
+    return;
+  }
+
+  loading = true;
+
+  loadButton.disabled = true;
+
+  setStatus(
+    "Loading AI...",
+    "loading"
+  );
+
+  progress.textContent =
+    "Checking WebGPU...";
+
+  try {
+
+    /* -----------------------------------------
+       WebGPU
+       ----------------------------------------- */
+
+    await checkWebGPU();
+
+
+    /* -----------------------------------------
+       Import WebLLM
+       ----------------------------------------- */
+
+    progress.textContent =
+      "Loading WebLLM...";
+
+    webllm =
+      await import(WEBLLM_URL);
+
+    webllmInfo.textContent =
+      "Loaded ✓";
+
+
+    /* -----------------------------------------
+       Progress callback
+       ----------------------------------------- */
+
+    const initProgressCallback =
+      (report) => {
+
+        if(report){
+
+          let text = "";
+
+          if(report.text){
+            text = report.text;
+          }
+
+          if(
+            report.progress !== undefined
+          ){
+
+            const percent =
+              Math.round(
+                report.progress * 100
+              );
+
+            text +=
+              " " + percent + "%";
+          }
+
+          progress.textContent =
+            text ||
+            "Loading model...";
+        }
+      };
+
+
+    /* -----------------------------------------
+       Create engine
+       ----------------------------------------- */
+
+    progress.textContent =
+      "Starting local AI...";
+
+    engine =
+      await webllm.CreateMLCEngine(
+        MODEL,
+        {
+          initProgressCallback:
+            initProgressCallback,
+
+          logLevel:
+            "INFO"
+        }
       );
 
-      return true;
 
-    }else{
+    /* -----------------------------------------
+       Ready
+       ----------------------------------------- */
 
-      addTest(
-        name,
-        "❌ FAILED — HTTP " +
-        response.status +
-        " " +
-        response.statusText,
-        "bad"
-      );
+    setStatus(
+      "AI is ready ✓",
+      "ready"
+    );
 
-      return false;
+    progress.textContent =
+      "Model loaded successfully.";
+
+    promptBox.disabled = false;
+    sendButton.disabled = false;
+
+    loadButton.textContent =
+      "✓ AI Loaded";
+
+    promptBox.focus();
+
+
+  } catch(error){
+
+    console.error(
+      "LuciChat loading error:",
+      error
+    );
+
+    engine = null;
+
+    setStatus(
+      "AI failed to load",
+      "error"
+    );
+
+    progress.innerHTML = "";
+
+    const errorBox =
+      document.createElement("div");
+
+    errorBox.className =
+      "error";
+
+    errorBox.textContent =
+      "ERROR:\n" +
+      (error?.stack ||
+       error?.message ||
+       String(error));
+
+    progress.appendChild(errorBox);
+
+    loadButton.disabled = false;
+
+    loadButton.textContent =
+      "🔄 Try Again";
+
+  } finally {
+
+    loading = false;
+
+  }
+}
+
+
+/* =========================================================
+   SEND MESSAGE
+   ========================================================= */
+
+async function sendMessage(){
+
+  if(
+    !engine ||
+    generating
+  ){
+    return;
+  }
+
+  const text =
+    promptBox.value.trim();
+
+  if(!text){
+    return;
+  }
+
+  generating = true;
+
+  sendButton.disabled = true;
+  promptBox.disabled = true;
+
+  promptBox.value = "";
+
+  addMessage(
+    "user",
+    text
+  );
+
+  const answerElement =
+    addMessage(
+      "assistant",
+      ""
+    );
+
+  try {
+
+    const stream =
+      await engine.chat.completions.create({
+
+        messages: [
+
+          {
+            role: "system",
+
+            content:
+              "You are LuciChat, a helpful " +
+              "friendly AI assistant. " +
+              "Answer clearly and naturally."
+          },
+
+          {
+            role: "user",
+
+            content: text
+          }
+
+        ],
+
+        temperature: 0.7,
+
+        max_tokens: 512,
+
+        stream: true
+
+      });
+
+
+    for await(
+      const chunk of stream
+    ){
+
+      const delta =
+        chunk?.choices?.[0]?.delta?.content;
+
+      if(delta){
+
+        answerElement.textContent +=
+          delta;
+
+        chat.scrollTop =
+          chat.scrollHeight;
+      }
     }
 
-  }catch(error){
 
-    addTest(
-      name,
-      "❌ FETCH ERROR — " +
-      error.name +
-      ": " +
-      error.message,
-      "bad"
+  } catch(error){
+
+    console.error(
+      "Generation error:",
+      error
     );
 
-    return false;
-  }
-}
-
-async function testWebGPU(){
-
-  addTest("WebGPU", "⏳ Testing...");
-
-  if(!("gpu" in navigator)){
-
-    addTest(
-      "WebGPU",
-      "❌ navigator.gpu is NOT available.",
-      "bad"
-    );
-
-    return false;
-  }
-
-  try{
-
-    const adapter =
-      await navigator.gpu.requestAdapter();
-
-    if(!adapter){
-
-      addTest(
-        "WebGPU",
-        "❌ WebGPU exists, but no GPU adapter was returned.",
-        "bad"
+    answerElement.textContent =
+      "Sorry, an error occurred while generating the response.\n\n" +
+      (
+        error?.message ||
+        String(error)
       );
 
-      return false;
-    }
+  } finally {
 
-    addTest(
-      "WebGPU",
-      "✅ WebGPU adapter found.",
-      "ok"
-    );
+    generating = false;
 
-    return true;
+    sendButton.disabled = false;
+    promptBox.disabled = false;
 
-  }catch(error){
+    promptBox.focus();
 
-    addTest(
-      "WebGPU",
-      "❌ WebGPU ERROR — " +
-      error.name +
-      ": " +
-      error.message,
-      "bad"
-    );
-
-    return false;
   }
 }
 
-async function testWebLLMImport(){
 
-  addTest(
-    "WebLLM JavaScript CDN",
-    "⏳ Importing WebLLM..."
-  );
+/* =========================================================
+   BUTTONS
+   ========================================================= */
 
-  try{
+loadButton.addEventListener(
+  "click",
+  loadAI
+);
 
-    const module =
-      await import(WEBLLM_CDN);
+sendButton.addEventListener(
+  "click",
+  sendMessage
+);
 
-    if(module){
 
-      addTest(
-        "WebLLM JavaScript CDN",
-        "✅ WebLLM imported successfully.",
-        "ok"
+/* =========================================================
+   ENTER TO SEND
+   ========================================================= */
+
+promptBox.addEventListener(
+  "keydown",
+  (event) => {
+
+    if(
+      event.key === "Enter" &&
+      !event.shiftKey
+    ){
+
+      event.preventDefault();
+
+      sendMessage();
+    }
+
+  }
+);
+
+
+/* =========================================================
+   INITIAL WEBGPU CHECK
+   ========================================================= */
+
+(async function(){
+
+  try {
+
+    await checkWebGPU();
+
+  } catch(error){
+
+    gpuInfo.textContent =
+      "Unavailable";
+
+    progress.textContent =
+      "⚠️ " +
+      (
+        error?.message ||
+        "WebGPU is unavailable."
       );
 
-      return true;
-    }
-
-  }catch(error){
-
-    addTest(
-      "WebLLM JavaScript CDN",
-      "❌ WebLLM import failed — " +
-      error.name +
-      ": " +
-      error.message,
-      "bad"
+    setStatus(
+      "WebGPU unavailable",
+      "error"
     );
 
-    return false;
   }
 
-  return false;
-}
-
-async function runTests(){
-
-  tests.innerHTML = "";
-
-  addTest(
-    "Secure Context",
-    window.isSecureContext
-      ? "✅ HTTPS / secure context detected."
-      : "❌ This page is NOT running in a secure context.",
-    window.isSecureContext ? "ok" : "bad"
-  );
-
-  await testWebGPU();
-
-  await testFetch(
-    "https://esm.run/",
-    "ESM CDN connection"
-  );
-
-  await testWebLLMImport();
-
-  await testFetch(
-    HF_MODEL,
-    "Hugging Face model repository"
-  );
-
-  await testFetch(
-    "https://huggingface.co/mlc-ai/" +
-    MODEL +
-    "/resolve/main/mlc-chat-config.json",
-    "Model configuration file"
-  );
-
-  await testFetch(
-    "https://huggingface.co/mlc-ai/" +
-    MODEL +
-    "/resolve/main/tokenizer.json",
-    "Tokenizer file"
-  );
-
-  addTest(
-    "Model ID",
-    "ℹ️ " + MODEL,
-    "warn"
-  );
-
-  addTest(
-    "Final result",
-    "Tests complete. Send me a screenshot of this page.",
-    "warn"
-  );
-
-  document.getElementById("info").textContent =
-`Model:
-${MODEL}
-
-WebLLM:
-0.2.85
-
-Secure Context:
-${window.isSecureContext}
-
-WebGPU:
-${"gpu" in navigator}
-
-Browser:
-${navigator.userAgent}
-
-Platform:
-${navigator.platform}
-
-Online:
-${navigator.onLine}
-
-Language:
-${navigator.language}`;
-}
-
-runTests();
+})();
 
 </script>
 
