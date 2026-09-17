@@ -4,13 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b1020">
-
 <title>LuciChat — Local AI</title>
 
 <style>
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 body{
   margin:0;
@@ -20,20 +17,19 @@ body{
 }
 
 header{
-  padding:18px;
+  padding:20px;
   border-bottom:1px solid #26304a;
   background:#0e1529;
 }
 
 h1{
   margin:0;
-  font-size:24px;
+  font-size:28px;
 }
 
 .subtitle{
-  margin-top:5px;
+  margin-top:6px;
   color:#9ca8c7;
-  font-size:14px;
 }
 
 main{
@@ -45,7 +41,7 @@ main{
 .card{
   background:#111a30;
   border:1px solid #26304a;
-  border-radius:16px;
+  border-radius:18px;
   padding:16px;
   margin-bottom:16px;
 }
@@ -54,62 +50,54 @@ main{
   display:flex;
   align-items:center;
   gap:10px;
-  margin-bottom:12px;
+  font-size:18px;
+  margin-bottom:14px;
 }
 
 .dot{
-  width:11px;
-  height:11px;
+  width:12px;
+  height:12px;
   border-radius:50%;
   background:#777;
+  flex:none;
 }
 
-.dot.ready{
-  background:#35d07f;
-}
-
-.dot.loading{
-  background:#f4c542;
-}
-
-.dot.error{
-  background:#ff5c69;
-}
+.dot.loading{background:#f4c542}
+.dot.ready{background:#35d07f}
+.dot.error{background:#ff5c69}
 
 button{
   width:100%;
   border:0;
-  border-radius:12px;
-  padding:13px 16px;
-  font-size:16px;
-  font-weight:600;
+  border-radius:13px;
+  padding:14px;
   background:#5865f2;
   color:white;
-  cursor:pointer;
+  font-size:17px;
+  font-weight:700;
 }
 
 button:disabled{
   opacity:.45;
-  cursor:not-allowed;
 }
 
 #progress{
   margin-top:12px;
   color:#aab5d3;
   font-size:14px;
-  min-height:20px;
+  line-height:1.5;
+  word-break:break-word;
 }
 
 #chat{
   min-height:180px;
   max-height:55vh;
   overflow-y:auto;
-  padding:4px;
 }
 
 .message{
   margin:10px 0;
-  padding:12px 14px;
+  padding:13px;
   border-radius:14px;
   line-height:1.5;
   white-space:pre-wrap;
@@ -127,18 +115,18 @@ button:disabled{
 }
 
 .label{
+  color:#8995b5;
   font-size:12px;
-  color:#8f9bb9;
-  margin-bottom:4px;
+  margin-bottom:5px;
 }
 
 textarea{
   width:100%;
-  min-height:90px;
-  resize:vertical;
+  min-height:95px;
   margin-top:12px;
-  padding:12px;
-  border-radius:12px;
+  padding:13px;
+  resize:vertical;
+  border-radius:13px;
   border:1px solid #303d5d;
   background:#0b1224;
   color:#eef2ff;
@@ -161,13 +149,9 @@ textarea:focus{
 }
 
 .info{
-  color:#8f9bb9;
-  font-size:13px;
-  line-height:1.5;
-}
-
-small{
-  color:#7f8bab;
+  color:#9ca8c7;
+  font-size:14px;
+  line-height:1.7;
 }
 </style>
 </head>
@@ -183,93 +167,115 @@ small{
 
 <main>
 
-  <div class="card">
+<div class="card">
 
-    <div class="status">
-      <div id="statusDot" class="dot"></div>
-      <strong id="statusText">AI is not loaded</strong>
-    </div>
+  <div class="status">
+    <div id="statusDot" class="dot"></div>
+    <strong id="statusText">AI is not loaded</strong>
+  </div>
 
-    <button id="loadButton">
-      🚀 Load AI
-    </button>
+  <button id="loadButton">
+    🚀 Load AI
+  </button>
 
-    <div id="progress">
-      Ready to load the local AI model.
+  <div id="progress">
+    Ready.
+  </div>
+
+</div>
+
+
+<div class="card">
+
+  <div id="chat">
+
+    <div class="message assistant">
+      <div class="label">LuciChat</div>
+      Load the AI above to start chatting.
     </div>
 
   </div>
 
-  <div class="card">
+  <textarea
+    id="prompt"
+    disabled
+    placeholder="Type your message..."
+  ></textarea>
 
-    <div id="chat">
-      <div class="message assistant">
-        <div class="label">LuciChat</div>
-        Load the AI above to start chatting.
-      </div>
-    </div>
+  <button
+    id="sendButton"
+    disabled
+  >
+    Send
+  </button>
 
-    <textarea
-      id="prompt"
-      placeholder="Type your message..."
-      disabled
-    ></textarea>
+</div>
 
-    <button id="sendButton" disabled>
-      Send
-    </button>
+
+<div class="card">
+
+  <div class="info">
+
+    <strong>System</strong><br>
+
+    Model:
+    SmolLM2-360M-Instruct-q4f32_1-MLC
+    <br>
+
+    WebGPU:
+    <span id="gpuInfo">Checking...</span>
+
+    <br>
+
+    WebLLM:
+    <span id="webllmInfo">Not loaded</span>
+
+    <br>
+
+    Model files:
+    Cloudflare proxy
 
   </div>
 
-  <div class="card">
-    <div class="info">
-      <strong>System information</strong><br><br>
-
-      Model:
-      <span id="modelInfo">SmolLM2-360M-Instruct-q4f32_1-MLC</span>
-      <br>
-
-      WebGPU:
-      <span id="gpuInfo">Checking...</span>
-      <br>
-
-      WebLLM:
-      <span id="webllmInfo">Not loaded</span>
-
-      <br><br>
-
-      <small>
-        The model runs locally in your browser using WebGPU.
-        The first load may take a while because the model files
-        have to be downloaded.
-      </small>
-    </div>
-  </div>
+</div>
 
 </main>
 
-<script type="module">
 
-/* =========================================================
-   LUCI CHAT
-   ========================================================= */
+<script type="module">
 
 const MODEL =
   "SmolLM2-360M-Instruct-q4f32_1-MLC";
 
-  const WEBLLM_URL =
-  "https://unpkg.com/@mlc-ai/web-llm@0.2.85/lib/index.js";
+/*
+  IMPORTANT:
+
+  This is your Cloudflare Worker URL.
+
+  Because the website itself is running on
+  goat.workers.dev, we can use the same origin.
+*/
+const WORKER =
+  window.location.origin;
+
+
+/*
+  WebLLM JavaScript itself.
+
+  This is ONLY the JavaScript library.
+
+  The actual model files are downloaded
+  through our Cloudflare Worker below.
+*/
+const WEBLLM_URL =
+  "https://esm.run/@mlc-ai/web-llm@0.2.85";
+
 
 let webllm = null;
 let engine = null;
-
 let loading = false;
 let generating = false;
 
-
-/* =========================================================
-   ELEMENTS
-   ========================================================= */
 
 const loadButton =
   document.getElementById("loadButton");
@@ -299,11 +305,7 @@ const webllmInfo =
   document.getElementById("webllmInfo");
 
 
-/* =========================================================
-   STATUS
-   ========================================================= */
-
-function setStatus(text, type = "") {
+function setStatus(text,type=""){
 
   statusText.textContent = text;
 
@@ -315,16 +317,12 @@ function setStatus(text, type = "") {
 }
 
 
-/* =========================================================
-   CHAT MESSAGE
-   ========================================================= */
+function addMessage(role,text){
 
-function addMessage(role, text) {
-
-  const message =
+  const box =
     document.createElement("div");
 
-  message.className =
+  box.className =
     "message " +
     (role === "user"
       ? "user"
@@ -345,22 +343,22 @@ function addMessage(role, text) {
 
   content.textContent = text;
 
-  message.appendChild(label);
-  message.appendChild(content);
+  box.appendChild(label);
+  box.appendChild(content);
 
-  chat.appendChild(message);
+  chat.appendChild(box);
 
-  chat.scrollTop = chat.scrollHeight;
+  chat.scrollTop =
+    chat.scrollHeight;
 
   return content;
 }
 
 
-/* =========================================================
-   CHECK WEBGPU
-   ========================================================= */
-
-async function checkWebGPU(){
+/*
+  Check WebGPU.
+*/
+async function checkGPU(){
 
   if(!navigator.gpu){
 
@@ -368,7 +366,7 @@ async function checkWebGPU(){
       "Not available";
 
     throw new Error(
-      "WebGPU is not available in this browser."
+      "WebGPU is not available."
     );
   }
 
@@ -378,24 +376,75 @@ async function checkWebGPU(){
   if(!adapter){
 
     gpuInfo.textContent =
-      "No adapter found";
+      "No adapter";
 
     throw new Error(
-      "WebGPU exists, but no compatible GPU adapter was found."
+      "No compatible WebGPU adapter was found."
     );
   }
 
   gpuInfo.textContent =
     "Available ✓";
-
-  return adapter;
 }
 
 
-/* =========================================================
-   LOAD AI
-   ========================================================= */
+/*
+  Build the custom WebLLM configuration.
 
+  Instead of letting WebLLM contact Hugging Face
+  directly, the model URL goes through our Worker.
+*/
+function createAppConfig(){
+
+  const modelURL =
+    WORKER +
+    "/hf/mlc-ai/" +
+    MODEL;
+
+  const modelLibURL =
+    WORKER +
+    "/lib/v0_2_84/base/" +
+    MODEL +
+    "_cs1k-webgpu.wasm";
+
+
+  return {
+
+    model_list: [
+
+      {
+
+        model: modelURL,
+
+        model_id: MODEL,
+
+        model_lib:
+          modelLibURL,
+
+        vram_required_MB:
+          579.61,
+
+        low_resource_required:
+          true,
+
+        overrides: {
+
+          context_window_size:
+            4096
+
+        }
+
+      }
+
+    ]
+
+  };
+}
+
+
+/*
+  Load WebLLM + model.
+*/
 async function loadAI(){
 
   if(loading || engine){
@@ -414,19 +463,15 @@ async function loadAI(){
   progress.textContent =
     "Checking WebGPU...";
 
-  try {
 
-    /* -----------------------------------------
-       WebGPU
-       ----------------------------------------- */
+  try{
 
-    await checkWebGPU();
+    await checkGPU();
 
 
-    /* -----------------------------------------
-       Import WebLLM
-       ----------------------------------------- */
-
+    /*
+      Load WebLLM JavaScript.
+    */
     progress.textContent =
       "Loading WebLLM...";
 
@@ -437,65 +482,78 @@ async function loadAI(){
       "Loaded ✓";
 
 
-    /* -----------------------------------------
-       Progress callback
-       ----------------------------------------- */
+    /*
+      Custom configuration.
+    */
+    const appConfig =
+      createAppConfig();
 
+
+    /*
+      Show progress.
+    */
     const initProgressCallback =
       (report) => {
 
-        if(report){
-
-          let text = "";
-
-          if(report.text){
-            text = report.text;
-          }
-
-          if(
-            report.progress !== undefined
-          ){
-
-            const percent =
-              Math.round(
-                report.progress * 100
-              );
-
-            text +=
-              " " + percent + "%";
-          }
-
-          progress.textContent =
-            text ||
-            "Loading model...";
+        if(!report){
+          return;
         }
+
+        let text =
+          report.text || "";
+
+        if(
+          report.progress !== undefined
+        ){
+
+          const percent =
+            Math.round(
+              report.progress * 100
+            );
+
+          text +=
+            " " +
+            percent +
+            "%";
+        }
+
+        progress.textContent =
+          text ||
+          "Loading model...";
       };
 
-
-    /* -----------------------------------------
-       Create engine
-       ----------------------------------------- */
 
     progress.textContent =
       "Starting local AI...";
 
+
+    /*
+      Create the engine.
+    */
     engine =
       await webllm.CreateMLCEngine(
+
         MODEL,
+
         {
+
+          appConfig:
+            appConfig,
+
           initProgressCallback:
             initProgressCallback,
 
           logLevel:
             "INFO"
+
         }
+
       );
 
 
-    /* -----------------------------------------
-       Ready
-       ----------------------------------------- */
-
+    /*
+      Success!
+    */
     setStatus(
       "AI is ready ✓",
       "ready"
@@ -513,12 +571,9 @@ async function loadAI(){
     promptBox.focus();
 
 
-  } catch(error){
+  }catch(error){
 
-    console.error(
-      "LuciChat loading error:",
-      error
-    );
+    console.error(error);
 
     engine = null;
 
@@ -536,19 +591,22 @@ async function loadAI(){
       "error";
 
     errorBox.textContent =
-      "ERROR:\n" +
-      (error?.stack ||
-       error?.message ||
-       String(error));
+      "ERROR:\n\n" +
+      (
+        error?.stack ||
+        error?.message ||
+        String(error)
+      );
 
     progress.appendChild(errorBox);
 
-    loadButton.disabled = false;
+    loadButton.disabled =
+      false;
 
     loadButton.textContent =
       "🔄 Try Again";
 
-  } finally {
+  }finally{
 
     loading = false;
 
@@ -556,10 +614,9 @@ async function loadAI(){
 }
 
 
-/* =========================================================
-   SEND MESSAGE
-   ========================================================= */
-
+/*
+  Send chat message.
+*/
 async function sendMessage(){
 
   if(
@@ -583,46 +640,53 @@ async function sendMessage(){
 
   promptBox.value = "";
 
+
   addMessage(
     "user",
     text
   );
 
-  const answerElement =
+
+  const answer =
     addMessage(
       "assistant",
       ""
     );
 
-  try {
+
+  try{
 
     const stream =
       await engine.chat.completions.create({
 
-        messages: [
+        messages:[
 
           {
-            role: "system",
+
+            role:"system",
 
             content:
               "You are LuciChat, a helpful " +
               "friendly AI assistant. " +
               "Answer clearly and naturally."
+
           },
 
           {
-            role: "user",
 
-            content: text
+            role:"user",
+
+            content:text
+
           }
 
         ],
 
-        temperature: 0.7,
+        temperature:0.7,
 
-        max_tokens: 512,
+        max_tokens:512,
 
-        stream: true
+        stream:true
 
       });
 
@@ -636,50 +700,50 @@ async function sendMessage(){
 
       if(delta){
 
-        answerElement.textContent +=
+        answer.textContent +=
           delta;
 
         chat.scrollTop =
           chat.scrollHeight;
+
       }
+
     }
 
 
-  } catch(error){
+  }catch(error){
 
-    console.error(
-      "Generation error:",
-      error
-    );
+    console.error(error);
 
-    answerElement.textContent =
-      "Sorry, an error occurred while generating the response.\n\n" +
+    answer.textContent =
+      "Generation error:\n\n" +
       (
         error?.message ||
         String(error)
       );
 
-  } finally {
+  }finally{
 
     generating = false;
 
-    sendButton.disabled = false;
-    promptBox.disabled = false;
+    sendButton.disabled =
+      false;
+
+    promptBox.disabled =
+      false;
 
     promptBox.focus();
 
   }
+
 }
 
-
-/* =========================================================
-   BUTTONS
-   ========================================================= */
 
 loadButton.addEventListener(
   "click",
   loadAI
 );
+
 
 sendButton.addEventListener(
   "click",
@@ -687,13 +751,9 @@ sendButton.addEventListener(
 );
 
 
-/* =========================================================
-   ENTER TO SEND
-   ========================================================= */
-
 promptBox.addEventListener(
   "keydown",
-  (event) => {
+  event => {
 
     if(
       event.key === "Enter" &&
@@ -703,38 +763,31 @@ promptBox.addEventListener(
       event.preventDefault();
 
       sendMessage();
+
     }
 
   }
 );
 
 
-/* =========================================================
-   INITIAL WEBGPU CHECK
-   ========================================================= */
+/*
+  Initial GPU check.
+*/
+(async()=>{
 
-(async function(){
+  try{
 
-  try {
+    await checkGPU();
 
-    await checkWebGPU();
-
-  } catch(error){
-
-    gpuInfo.textContent =
-      "Unavailable";
-
-    progress.textContent =
-      "⚠️ " +
-      (
-        error?.message ||
-        "WebGPU is unavailable."
-      );
+  }catch(error){
 
     setStatus(
       "WebGPU unavailable",
       "error"
     );
+
+    progress.textContent =
+      error.message;
 
   }
 
