@@ -1,80 +1,95 @@
 export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
 
-  async fetch(request) {
-
-    const url =
-      new URL(request.url);
-
-    /*
-     * CORS
-     */
     const cors = {
-
       "Access-Control-Allow-Origin": "*",
-
-      "Access-Control-Allow-Methods":
-        "GET,HEAD,OPTIONS",
-
-      "Access-Control-Allow-Headers":
-        "*",
-
+      "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+      "Access-Control-Allow-Headers": "*",
       "Access-Control-Expose-Headers":
-        "Content-Length,Content-Range,Accept-Ranges,ETag"
-
+        "Content-Length, Content-Range, Accept-Ranges, ETag"
     };
 
-
-    /*
-     * OPTIONS
-     */
-    if(request.method === "OPTIONS"){
-
-      return new Response(
-        null,
-        {
-          status:204,
-          headers:cors
-        }
-      );
-
+    // CORS preflight
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: cors
+      });
     }
 
-
-    /*
-     * Only allow GET/HEAD.
-     */
-    if(
-      request.method !== "GET" &&
-      request.method !== "HEAD"
-    ){
-
-      return new Response(
-        "Method not allowed",
-        {
-          status:405,
-          headers:cors
-        }
-      );
-
+    // Only GET and HEAD
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      return new Response("Method not allowed", {
+        status: 405,
+        headers: cors
+      });
     }
 
+    // --------------------------------------------------
+    // WORKER TEST
+    // --------------------------------------------------
 
-    /*
-     * Hugging Face model files.
-     *
-     * /hf/mlc-ai/SmolLM2-360M-Instruct-q4f32_1-MLC/FILE
-     *
-     * becomes:
-     *
-     * https://huggingface.co/mlc-ai/SmolLM2-360M-Instruct-q4f32_1-MLC/resolve/main/FILE
-     */
-    if(
-      url.pathname.startsWith("/hf/")
-    ){
+    if (url.pathname === "/proxy-test") {
+      return new Response("LuciChat proxy is working!", {
+        status: 200,
+        headers: {
+          ...cors,
+          "Content-Type": "text/plain;charset=UTF-8",
+          "Cache-Control": "no-store"
+        }
+      });
+    }
 
-      const path =
-        url.pathname.substring(4);
+    // --------------------------------------------------
+    // HUGGING FACE TEST
+    // --------------------------------------------------
 
+    if (url.pathname === "/test-hf") {
+      const target =
+        "https://huggingface.co/mlc-ai/" +
+        "SmolLM2-360M-Instruct-q4f32_1-MLC/" +
+        "resolve/main/mlc-chat-config.json";
+
+      try {
+        const response = await fetch(target, {
+          method: "GET",
+          redirect: "follow"
+        });
+
+        return new Response(
+          "HF status: " + response.status + "\n" +
+          "HF content-type: " +
+          (response.headers.get("content-type") || "unknown"),
+          {
+            status: 200,
+            headers: {
+              ...cors,
+              "Content-Type": "text/plain;charset=UTF-8",
+              "Cache-Control": "no-store"
+            }
+          }
+        );
+      } catch (error) {
+        return new Response(
+          "HF ERROR: " + error.message,
+          {
+            status: 502,
+            headers: {
+              ...cors,
+              "Content-Type": "text/plain;charset=UTF-8"
+            }
+          }
+        );
+      }
+    }
+
+    // --------------------------------------------------
+    // HUGGING FACE MODEL FILES
+    // --------------------------------------------------
+
+    if (url.pathname.startsWith("/hf/")) {
+      const path = url.pathname.slice(4);
 
       const target =
         "https://huggingface.co/" +
@@ -82,34 +97,15 @@ export default {
         "/resolve/main/" +
         url.search;
 
-
-      return proxy(
-        request,
-        target,
-        cors
-      );
-
+      return proxy(request, target, cors);
     }
 
+    // --------------------------------------------------
+    // WEBLLM WASM FILES
+    // --------------------------------------------------
 
-    /*
-     * WebGPU WASM library.
-     *
-     * /lib/v0_2_84/base/FILE
-     *
-     * becomes:
-     *
-     * https://raw.githubusercontent.com/
-     * mlc-ai/binary-mlc-llm-libs/main/
-     * web-llm-models/v0_2_84/base/FILE
-     */
-    if(
-      url.pathname.startsWith("/lib/")
-    ){
-
-      const path =
-        url.pathname.substring(5);
-
+    if (url.pathname.startsWith("/lib/")) {
+      const path = url.pathname.slice(5);
 
       const target =
         "https://raw.githubusercontent.com/" +
@@ -118,205 +114,135 @@ export default {
         path +
         url.search;
 
-
-      return proxy(
-        request,
-        target,
-        cors
-      );
-
+      return proxy(request, target, cors);
     }
 
+    // --------------------------------------------------
+    // ROOT
+    // --------------------------------------------------
 
-    /*
-     * Simple status page.
-     */
-    if(url.pathname === "/proxy-test"){
-
-      return new Response(
-
-        "LuciChat proxy is working.",
-
-        {
-          status:200,
-          headers:{
-            ...cors,
-            "Content-Type":
-              "text/plain;charset=UTF-8"
-          }
-        }
-
-      );
-
-    }
-
-
-    /*
-     * Everything else.
-     */
     return new Response(
-
       "LuciChat Worker is running.\n\n" +
-      "Proxy endpoints:\n" +
+      "Tests:\n" +
       "/proxy-test\n" +
+      "/test-hf\n\n" +
+      "Proxy:\n" +
       "/hf/...\n" +
       "/lib/...",
-
       {
-        status:200,
-        headers:{
+        status: 200,
+        headers: {
           ...cors,
-          "Content-Type":
-            "text/plain;charset=UTF-8"
+          "Content-Type": "text/plain;charset=UTF-8",
+          "Cache-Control": "no-store"
         }
       }
-
     );
-
   }
-
 };
 
 
-/*
- * Proxy helper.
- */
-async function proxy(
-  request,
-  target,
-  cors
-){
+// ======================================================
+// PROXY
+// ======================================================
 
-  try{
+async function proxy(request, target, cors) {
+  try {
+    const headers = new Headers();
 
-    /*
-     * Forward useful request headers,
-     * especially Range requests.
-     */
-    const headers =
-      new Headers();
+    // Preserve range requests.
+    const range = request.headers.get("Range");
 
-
-    const range =
-      request.headers.get("Range");
-
-    if(range){
-
-      headers.set(
-        "Range",
-        range
-      );
-
+    if (range) {
+      headers.set("Range", range);
     }
 
+    // Preserve If-Range.
+    const ifRange = request.headers.get("If-Range");
 
-    const ifRange =
-      request.headers.get("If-Range");
-
-    if(ifRange){
-
-      headers.set(
-        "If-Range",
-        ifRange
-      );
-
+    if (ifRange) {
+      headers.set("If-Range", ifRange);
     }
 
+    const response = await fetch(target, {
+      method: request.method,
+      headers,
+      redirect: "follow"
+    });
 
-    const response =
-      await fetch(
+    // Don't pass every upstream header through.
+    // Some upstream headers can cause browser Cache API
+    // failures.
+    const out = new Headers();
 
-        target,
+    const contentType =
+      response.headers.get("Content-Type");
 
-        {
-          method:
-            request.method,
+    const contentLength =
+      response.headers.get("Content-Length");
 
-          headers:
-            headers,
+    const contentRange =
+      response.headers.get("Content-Range");
 
-          redirect:
-            "follow"
+    const etag =
+      response.headers.get("ETag");
 
-        }
+    const lastModified =
+      response.headers.get("Last-Modified");
 
-      );
+    const cacheControl =
+      response.headers.get("Cache-Control");
 
-
-    /*
-     * Copy response headers.
-     */
-    const outHeaders =
-      new Headers(response.headers);
-
-
-    /*
-     * Add CORS.
-     */
-    for(
-      const [key,value]
-      of Object.entries(cors)
-    ){
-
-      outHeaders.set(
-        key,
-        value
-      );
-
+    if (contentType) {
+      out.set("Content-Type", contentType);
     }
 
+    if (contentLength) {
+      out.set("Content-Length", contentLength);
+    }
 
-    /*
-     * Make sure browser knows
-     * range requests are supported.
-     */
-    outHeaders.set(
-      "Accept-Ranges",
-      "bytes"
-    );
+    if (contentRange) {
+      out.set("Content-Range", contentRange);
+    }
 
+    if (etag) {
+      out.set("ETag", etag);
+    }
 
+    if (lastModified) {
+      out.set("Last-Modified", lastModified);
+    }
+
+    if (cacheControl) {
+      out.set("Cache-Control", cacheControl);
+    }
+
+    // Required CORS headers.
+    for (const [key, value] of Object.entries(cors)) {
+      out.set(key, value);
+    }
+
+    // WebLLM uses range requests for large files.
+    out.set("Accept-Ranges", "bytes");
+
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: out
+    });
+
+  } catch (error) {
     return new Response(
-
-      response.body,
-
+      "Proxy error: " + error.message,
       {
-
-        status:
-          response.status,
-
-        statusText:
-          response.statusText,
-
-        headers:
-          outHeaders
-
-      }
-
-    );
-
-
-  }catch(error){
-
-    return new Response(
-
-      "Proxy error: " +
-      error.message,
-
-      {
-
-        status:502,
-
-        headers:{
+        status: 502,
+        headers: {
           ...cors,
           "Content-Type":
-            "text/plain;charset=UTF-8"
+            "text/plain;charset=UTF-8",
+          "Cache-Control": "no-store"
         }
-
       }
-
     );
-
   }
-
 }
