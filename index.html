@@ -6,263 +6,250 @@
 <title>LuciChat — Local AI</title>
 
 <style>
-* {
-  box-sizing: border-box;
+*{
+  box-sizing:border-box;
 }
 
-html, body {
-  margin: 0;
-  width: 100%;
-  min-height: 100%;
-  background: #080d1d;
-  color: #eef2ff;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+body{
+  margin:0;
+  background:#070c1c;
+  color:#eef2ff;
+  font-family:system-ui,-apple-system,sans-serif;
 }
 
-body {
-  min-height: 100vh;
+header{
+  padding:16px;
+  border-bottom:1px solid #293452;
+  background:#11182f;
+  position:relative;
 }
 
-/* HEADER */
-
-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  padding: 18px 20px;
-  background: #11182d;
-  border-bottom: 1px solid #293653;
+.title{
+  font-size:32px;
+  font-weight:800;
 }
 
-.title {
-  font-size: 28px;
-  font-weight: 800;
+.subtitle{
+  color:#aab5d5;
+  font-size:18px;
+  margin-top:2px;
 }
 
-.subtitle {
-  margin-top: 3px;
-  color: #9da9c8;
-  font-size: 15px;
+#creatorBtn{
+  position:absolute;
+  right:16px;
+  top:20px;
+  border:0;
+  background:none;
+  color:#aab5d5;
+  font-size:18px;
+  font-weight:700;
+  padding:8px;
 }
 
-#creatorStatus {
-  margin-top: 5px;
-  color: #72f5a0;
-  font-size: 12px;
+#creatorStatus{
+  position:absolute;
+  right:16px;
+  top:54px;
+  font-size:13px;
+  color:#7ee2a8;
 }
 
-#creatorBtn {
-  position: absolute;
-  right: 14px;
-  top: 20px;
-  border: 0;
-  background: transparent;
-  color: #9da9c8;
-  font-size: 14px;
-  font-weight: 700;
-  padding: 8px;
+#statusbar{
+  padding:11px 16px;
+  background:#0c1328;
+  color:#aab5d5;
+  border-bottom:1px solid #293452;
+  font-size:14px;
+  min-height:40px;
 }
 
-/* STATUS */
-
-#statusbar {
-  padding: 11px 18px;
-  background: #151e36;
-  border-bottom: 1px solid #202b47;
-  color: #aeb9d6;
-  font-size: 14px;
+#statusbar.good{
+  color:#7ee2a8;
 }
 
-#statusbar.good {
-  color: #72f5a0;
+#statusbar.bad{
+  color:#ff8d8d;
 }
 
-#statusbar.bad {
-  color: #ff7888;
+#chat{
+  min-height:calc(100vh - 210px);
+  padding:30px 18px 125px;
 }
 
-/* CHAT */
-
-#chat {
-  width: 100%;
-  max-width: 850px;
-  margin: 0 auto;
-  padding: 20px;
-  padding-bottom: 110px;
+#welcome{
+  text-align:center;
+  color:#aab5d5;
+  font-size:25px;
+  margin-top:55px;
 }
 
-#welcome {
-  margin: 70px auto;
-  text-align: center;
-  color: #aeb9d6;
-  font-size: 20px;
+.msg{
+  max-width:85%;
+  padding:14px 18px;
+  margin:12px 0;
+  border-radius:20px;
+  font-size:17px;
+  line-height:1.45;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
 }
 
-.msg {
-  width: fit-content;
-  max-width: 85%;
-  padding: 12px 15px;
-  margin: 10px 0;
-  border-radius: 16px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  line-height: 1.45;
+.user{
+  margin-left:auto;
+  background:#29469d;
 }
 
-.msg.user {
-  margin-left: auto;
-  background: #315cff;
-  color: white;
+.bot{
+  margin-right:auto;
+  background:#17213e;
+  border:1px solid #293452;
 }
 
-.msg.bot {
-  margin-right: auto;
-  background: #18213b;
-  border: 1px solid #2b3857;
+#composer{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  padding:14px 16px;
+  background:#0c1328;
+  border-top:1px solid #293452;
+  display:flex;
+  gap:12px;
+  z-index:5;
 }
 
-/* COMPOSER */
-
-#composer {
-  position: fixed;
-  z-index: 20;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  gap: 9px;
-  padding: 12px;
-  background: #0e1529;
-  border-top: 1px solid #293653;
+#input{
+  flex:1;
+  min-width:0;
+  background:#151e3a;
+  color:#eef2ff;
+  border:2px solid #344269;
+  border-radius:28px;
+  padding:17px 24px;
+  font-size:18px;
+  outline:none;
 }
 
-#input {
-  flex: 1;
-  min-width: 0;
-  height: 54px;
-  padding: 0 15px;
-  border: 1px solid #35415f;
-  border-radius: 15px;
-  outline: none;
-  background: #151e36;
-  color: white;
-  font-size: 16px;
+#input:focus{
+  border-color:#5169bd;
 }
 
-#input::placeholder {
-  color: #7e89a6;
+#sendBtn{
+  border:0;
+  border-radius:28px;
+  padding:0 27px;
+  background:#304aa2;
+  color:white;
+  font-size:18px;
+  font-weight:700;
+  min-width:110px;
 }
 
-#input:focus {
-  border-color: #4169ff;
+#sendBtn:disabled{
+  opacity:.5;
 }
 
-#sendBtn {
-  height: 54px;
-  padding: 0 20px;
-  border: 0;
-  border-radius: 15px;
-  background: #4169ff;
-  color: white;
-  font-size: 16px;
-  font-weight: 700;
+#modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.7);
+  align-items:center;
+  justify-content:center;
+  z-index:20;
 }
 
-#sendBtn:disabled {
-  opacity: .45;
+.modalbox{
+  width:min(90%,360px);
+  background:#151e3a;
+  border:1px solid #344269;
+  border-radius:20px;
+  padding:24px;
 }
 
-/* CREATOR MODAL */
-
-#modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: rgba(0,0,0,.75);
+.modalbox h2{
+  margin-top:0;
 }
 
-.modalbox {
-  width: 100%;
-  max-width: 360px;
-  padding: 22px;
-  border: 1px solid #35415f;
-  border-radius: 20px;
-  background: #151e36;
-  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+#pin{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid #344269;
+  background:#0c1328;
+  color:white;
+  font-size:18px;
+  outline:none;
 }
 
-.modalbox h2 {
-  margin: 0 0 12px;
+.modalbuttons{
+  display:flex;
+  gap:10px;
+  margin-top:15px;
 }
 
-#pin {
-  width: 100%;
-  height: 48px;
-  padding: 0 12px;
-  border: 1px solid #35415f;
-  border-radius: 10px;
-  outline: none;
-  background: #0c1326;
-  color: white;
-  font-size: 16px;
+.modalbuttons button{
+  flex:1;
+  padding:12px;
+  border:0;
+  border-radius:12px;
+  font-weight:700;
 }
 
-.modalbuttons {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
+#authorizeBtn{
+  background:#304aa2;
+  color:white;
 }
 
-.modalbuttons button {
-  flex: 1;
-  height: 45px;
-  border: 0;
-  border-radius: 10px;
-  font-weight: 700;
+#closeBtn{
+  background:#293452;
+  color:white;
 }
 
-#authorizeBtn {
-  background: #4169ff;
-  color: white;
+#result{
+  margin-top:12px;
+  color:#aab5d5;
 }
 
-#closeBtn {
-  background: #293653;
-  color: white;
+.retry{
+  display:block;
+  margin:18px auto;
+  padding:12px 20px;
+  border:0;
+  border-radius:14px;
+  background:#304aa2;
+  color:white;
+  font-size:16px;
+  font-weight:700;
 }
 
-#result {
-  margin-top: 12px;
-  font-size: 14px;
-}
+@media(max-width:500px){
 
-/* SMALL PHONES */
-
-@media (max-width: 450px) {
-
-  .title {
-    font-size: 25px;
+  .title{
+    font-size:30px;
   }
 
-  #chat {
-    padding: 15px;
-    padding-bottom: 105px;
+  .subtitle{
+    font-size:17px;
   }
 
-  .msg {
-    max-width: 90%;
+  #chat{
+    padding-top:20px;
   }
 
-  #composer {
-    padding: 9px;
+  #welcome{
+    font-size:22px;
   }
 
-  #sendBtn {
-    padding: 0 15px;
+  #sendBtn{
+    padding:0 20px;
+    min-width:95px;
+  }
+
+  #input{
+    padding-left:20px;
+    padding-right:20px;
   }
 }
 </style>
@@ -272,7 +259,9 @@ header {
 
 <header>
 
-  <div class="title">🤖 LuciChat</div>
+  <div class="title">
+    🤖 LuciChat
+  </div>
 
   <div class="subtitle">
     Your personal AI assistant
@@ -286,11 +275,9 @@ header {
 
 </header>
 
-
 <div id="statusbar">
   Starting LuciChat...
 </div>
-
 
 <main id="chat">
 
@@ -299,7 +286,6 @@ header {
   </div>
 
 </main>
-
 
 <div id="composer">
 
@@ -316,9 +302,6 @@ header {
   </button>
 
 </div>
-
-
-<!-- CREATOR WINDOW -->
 
 <div id="modal">
 
@@ -354,34 +337,44 @@ header {
 
 <script type="module">
 
-/* =========================================
-   LUCI CHAT AI
-   ========================================= */
+/*
+  =========================================================
+  LUCICHAT AI
+  =========================================================
+*/
 
-import {
-  CreateMLCEngine
-} from "https://esm.run/@mlc-ai/web-llm";
-
-
+/*
+  Smaller Llama 3.2 model.
+  WebLLM currently lists this model.
+*/
 const MODEL =
-  "Llama-3.2-1B-Instruct-q4f16_1-MLC";
+  "Llama-3.2-1B-Instruct-q4f32_1-MLC";
 
 
 let engine = null;
 
+let starting = false;
 
+
+/*
+  Conversation history
+*/
 const messages = [
 
   {
-    role: "system",
+    role:"system",
 
     content:
-      "You are LuciChat, a friendly personal AI assistant. Be helpful, concise, honest, and safe."
+      "You are LuciChat, a friendly personal AI assistant. " +
+      "Be helpful, concise, honest, and safe."
   }
 
 ];
 
 
+/*
+  Page elements
+*/
 const chat =
   document.getElementById("chat");
 
@@ -398,11 +391,10 @@ const welcome =
   document.getElementById("welcome");
 
 
-/* =========================================
-   UI HELPERS
-   ========================================= */
-
-function setStatus(text, type = "") {
+/*
+  Status message
+*/
+function setStatus(text,type=""){
 
   statusbar.textContent = text;
 
@@ -411,7 +403,10 @@ function setStatus(text, type = "") {
 }
 
 
-function addMessage(text, type) {
+/*
+  Add chat bubble
+*/
+function addMessage(text,type){
 
   const bubble =
     document.createElement("div");
@@ -430,23 +425,55 @@ function addMessage(text, type) {
   );
 
   return bubble;
+
 }
 
 
-/* =========================================
-   START AI
-   ========================================= */
+/*
+  Remove welcome message
+*/
+function removeWelcome(){
 
-async function startAI() {
+  if(welcome){
+
+    welcome.style.display =
+      "none";
+
+  }
+
+}
+
+
+/*
+  =========================================================
+  START AI
+  =========================================================
+*/
+
+async function startAI(){
+
+  if(starting){
+    return;
+  }
+
+  if(engine){
+    return;
+  }
+
+  starting = true;
+
+  sendBtn.disabled = true;
 
   setStatus(
     "Checking browser..."
   );
 
 
-  /* HTTPS CHECK */
+  /*
+    HTTPS check
+  */
 
-  if (!window.isSecureContext) {
+  if(!window.isSecureContext){
 
     setStatus(
       "HTTPS is required.",
@@ -456,13 +483,18 @@ async function startAI() {
     welcome.textContent =
       "LuciChat needs to be opened using HTTPS.";
 
+    starting = false;
+
     return;
+
   }
 
 
-  /* WEBGPU CHECK */
+  /*
+    WebGPU check
+  */
 
-  if (!navigator.gpu) {
+  if(!navigator.gpu){
 
     setStatus(
       "WebGPU is not available.",
@@ -470,28 +502,50 @@ async function startAI() {
     );
 
     welcome.textContent =
-      "LuciChat is working, but this browser doesn't provide WebGPU. The local AI cannot run here.";
+      "This browser does not provide WebGPU, so the local AI cannot run here.";
+
+    starting = false;
 
     return;
+
   }
 
 
-  setStatus(
-    "WebGPU found ✓ Loading AI..."
-  );
+  try{
+
+    /*
+      Download WebLLM itself
+    */
+
+    setStatus(
+      "WebGPU found ✓ Loading WebLLM..."
+    );
 
 
-  try {
+    const WebLLM =
+      await import(
+        "https://esm.run/@mlc-ai/web-llm"
+      );
+
+
+    setStatus(
+      "WebLLM loaded ✓ Preparing AI..."
+    );
+
+
+    /*
+      Load model
+    */
 
     engine =
-      await CreateMLCEngine(
+      await WebLLM.CreateMLCEngine(
 
         MODEL,
 
         {
 
           initProgressCallback:
-            function(progress) {
+            function(progress){
 
               console.log(
                 "LuciChat loading:",
@@ -499,25 +553,62 @@ async function startAI() {
               );
 
 
-              if (
-                progress &&
-                progress.text
-              ) {
+              if(!progress){
+                return;
+              }
+
+
+              /*
+                WebLLM normally supplies
+                progress.text.
+              */
+
+              if(progress.text){
 
                 setStatus(
                   progress.text
+                );
+
+                return;
+
+              }
+
+
+              /*
+                Backup percentage
+              */
+
+              if(
+                typeof progress.progress ===
+                "number"
+              ){
+
+                const percent =
+                  Math.round(
+                    progress.progress * 100
+                  );
+
+
+                setStatus(
+                  "Loading AI model: " +
+                  percent +
+                  "%"
                 );
 
               }
 
             },
 
-          logLevel: "ERROR"
+          logLevel:"ERROR"
 
         }
 
       );
 
+
+    /*
+      SUCCESS
+    */
 
     setStatus(
       "LuciChat AI is ready ✓",
@@ -529,22 +620,33 @@ async function startAI() {
       "I'm ready. 🤖💙 Ask me anything!";
 
 
-    sendBtn.disabled =
-      false;
-
+    sendBtn.disabled = false;
 
     input.focus();
 
+    starting = false;
 
-  } catch (error) {
+
+  }catch(error){
+
+    /*
+      FAILURE
+    */
 
     console.error(
-      "LuciChat AI error:",
+      "LuciChat startup error:",
       error
     );
 
 
-    const errorText =
+    engine = null;
+
+    starting = false;
+
+    sendBtn.disabled = true;
+
+
+    let errorText =
       error &&
       error.message
         ? error.message
@@ -552,38 +654,81 @@ async function startAI() {
 
 
     setStatus(
-      "AI failed to start.",
+      "AI could not start.",
       "bad"
     );
 
 
     welcome.textContent =
-      "The LuciChat website is working, but the AI couldn't start.";
+      "LuciChat loaded, but the AI could not start.";
 
 
     addMessage(
-      "AI error: " + errorText,
+
+      "⚠️ AI startup error:\n\n" +
+      errorText +
+      "\n\n" +
+      "If this says 'Failed to fetch', the browser could not download one of the AI files.",
+
       "bot"
+
     );
+
+
+    /*
+      Retry button
+    */
+
+    const retry =
+      document.createElement("button");
+
+    retry.className =
+      "retry";
+
+    retry.textContent =
+      "🔄 Try Again";
+
+
+    retry.onclick =
+      function(){
+
+        retry.remove();
+
+        startAI();
+
+      };
+
+
+    chat.appendChild(retry);
 
   }
 
 }
 
 
-/* =========================================
-   SEND MESSAGE
-   ========================================= */
+/*
+  =========================================================
+  SEND MESSAGE
+  =========================================================
+*/
 
-async function sendMessage() {
+async function sendMessage(){
 
   const text =
     input.value.trim();
 
 
-  if (!text)
+  if(!text){
     return;
+  }
 
+
+  removeWelcome();
+
+
+  /*
+    Show user message
+  */
 
   addMessage(
     text,
@@ -594,31 +739,46 @@ async function sendMessage() {
   input.value = "";
 
 
-  /* AI NOT READY */
+  /*
+    AI not ready
+  */
 
-  if (!engine) {
+  if(!engine){
 
     addMessage(
-      "LuciChat is still starting. Please wait until it says 'LuciChat AI is ready ✓'.",
+
+      "LuciChat is still starting. " +
+      "Please wait until the status says " +
+      "\"LuciChat AI is ready ✓\".",
+
       "bot"
+
     );
 
     return;
+
   }
 
 
-  sendBtn.disabled =
-    true;
+  sendBtn.disabled = true;
 
+
+  /*
+    Save user message
+  */
 
   messages.push({
 
-    role: "user",
+    role:"user",
 
-    content: text
+    content:text
 
   });
 
+
+  /*
+    Thinking bubble
+  */
 
   const thinking =
     addMessage(
@@ -627,44 +787,48 @@ async function sendMessage() {
     );
 
 
-  try {
+  try{
 
     const response =
       await engine.chat.completions.create({
 
-        messages: messages,
+        messages:messages,
 
-        temperature: 0.7,
+        temperature:0.7,
 
-        max_tokens: 300
+        max_tokens:300
 
       });
 
 
     const answer =
-      response
-        ?.choices
-        ?.at(0)
-        ?.message
-        ?.content
-      ||
-      "I couldn't generate a response.";
+      response &&
+      response.choices &&
+      response.choices[0] &&
+      response.choices[0].message &&
+      response.choices[0].message.content
+        ? response.choices[0].message.content
+        : "I couldn't generate a response.";
 
 
     thinking.textContent =
       answer;
 
 
+    /*
+      Save AI response
+    */
+
     messages.push({
 
-      role: "assistant",
+      role:"assistant",
 
-      content: answer
+      content:answer
 
     });
 
 
-  } catch (error) {
+  }catch(error){
 
     console.error(
       "Chat error:",
@@ -673,23 +837,23 @@ async function sendMessage() {
 
 
     thinking.textContent =
-      "Sorry — LuciChat had an error generating that response.";
+      "⚠️ Sorry — LuciChat had an error generating that response.";
 
   }
 
 
-  sendBtn.disabled =
-    false;
-
+  sendBtn.disabled = false;
 
   input.focus();
 
 }
 
 
-/* =========================================
-   SEND BUTTON
-   ========================================= */
+/*
+  =========================================================
+  SEND BUTTON
+  =========================================================
+*/
 
 sendBtn.addEventListener(
   "click",
@@ -697,17 +861,19 @@ sendBtn.addEventListener(
 );
 
 
-/* =========================================
-   ENTER KEY
-   ========================================= */
+/*
+  =========================================================
+  ENTER KEY
+  =========================================================
+*/
 
 input.addEventListener(
-  "keydown",
-  function(event) {
 
-    if (
-      event.key === "Enter"
-    ) {
+  "keydown",
+
+  function(event){
+
+    if(event.key === "Enter"){
 
       event.preventDefault();
 
@@ -716,71 +882,92 @@ input.addEventListener(
     }
 
   }
+
 );
 
 
-/* =========================================
-   CREATOR BUTTON
-   ========================================= */
+/*
+  =========================================================
+  CREATOR MODAL
+  =========================================================
+*/
+
+const modal =
+  document.getElementById("modal");
+
+const pin =
+  document.getElementById("pin");
+
+const result =
+  document.getElementById("result");
+
+
+/*
+  Open
+*/
 
 document
   .getElementById("creatorBtn")
   .addEventListener(
+
     "click",
-    function() {
 
-      document
-        .getElementById("modal")
-        .style.display = "flex";
+    function(){
 
-      document
-        .getElementById("pin")
-        .focus();
+      modal.style.display =
+        "flex";
+
+      pin.value = "";
+
+      result.textContent = "";
+
+      pin.focus();
 
     }
+
   );
 
 
-/* =========================================
-   CLOSE CREATOR
-   ========================================= */
+/*
+  Close
+*/
 
 document
   .getElementById("closeBtn")
   .addEventListener(
-    "click",
-    function() {
 
-      document
-        .getElementById("modal")
-        .style.display = "none";
+    "click",
+
+    function(){
+
+      modal.style.display =
+        "none";
 
     }
+
   );
 
 
-/* =========================================
-   CREATOR PIN
-   ========================================= */
+/*
+  =========================================================
+  CREATOR ACCESS
+  =========================================================
+*/
 
 document
   .getElementById("authorizeBtn")
   .addEventListener(
+
     "click",
-    function() {
 
-      const pin =
-        document
-          .getElementById("pin")
-          .value;
+    function(){
 
+      /*
+        This is only a simple client-side
+        creator lock, NOT real security.
+      */
 
-      const result =
-        document
-          .getElementById("result");
-
-
-      if (pin === "1234") {
+      if(pin.value === "1234"){
 
         localStorage.setItem(
           "luciCreator",
@@ -789,9 +976,7 @@ document
 
 
         document
-          .getElementById(
-            "creatorStatus"
-          )
+          .getElementById("creatorStatus")
           .textContent =
           "Creator: You ✓";
 
@@ -801,19 +986,20 @@ document
 
 
         setTimeout(
-          function() {
 
-            document
-              .getElementById("modal")
-              .style.display =
+          function(){
+
+            modal.style.display =
               "none";
 
           },
+
           700
+
         );
 
 
-      } else {
+      }else{
 
         result.textContent =
           "Wrong PIN.";
@@ -821,32 +1007,33 @@ document
       }
 
     }
+
   );
 
 
-/* =========================================
-   REMEMBER CREATOR
-   ========================================= */
+/*
+  Remember creator status
+*/
 
-if (
+if(
   localStorage.getItem(
     "luciCreator"
   ) === "yes"
-) {
+){
 
   document
-    .getElementById(
-      "creatorStatus"
-    )
+    .getElementById("creatorStatus")
     .textContent =
     "Creator: You ✓";
 
 }
 
 
-/* =========================================
-   START
-   ========================================= */
+/*
+  =========================================================
+  START LUCICHAT
+  =========================================================
+*/
 
 startAI();
 
