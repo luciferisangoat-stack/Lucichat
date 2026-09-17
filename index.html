@@ -6,7 +6,7 @@
 <title>LuciChat — Local AI</title>
 
 <style>
-*{box-sizing:border-box;}
+*{box-sizing:border-box}
 
 body{
   margin:0;
@@ -65,6 +65,7 @@ button:disabled{
 #chat{
   min-height:calc(100vh - 180px);
   padding:18px;
+  padding-bottom:110px;
   max-width:900px;
   margin:auto;
 }
@@ -135,6 +136,7 @@ button:disabled{
   background:#0b1020;
   border-top:1px solid #26304a;
   padding:12px;
+  z-index:5;
 }
 
 .composer-inner{
@@ -221,6 +223,7 @@ button:disabled{
 }
 
 @media(max-width:600px){
+
   header{
     padding:12px;
   }
@@ -231,7 +234,7 @@ button:disabled{
 
   #chat{
     padding:14px;
-    padding-bottom:100px;
+    padding-bottom:110px;
   }
 
   .bubble{
@@ -241,6 +244,7 @@ button:disabled{
   .composer{
     padding:8px;
   }
+
 }
 </style>
 </head>
@@ -248,6 +252,7 @@ button:disabled{
 <body>
 
 <header>
+
   <div>
     <div class="logo">🤖 LuciChat</div>
     <div class="subtitle">Your personal AI assistant</div>
@@ -256,6 +261,7 @@ button:disabled{
   <button class="creator-btn" id="creatorBtn">
     Creator
   </button>
+
 </header>
 
 <div id="status">
@@ -265,11 +271,13 @@ button:disabled{
 <main id="chat">
 
   <div class="message assistant">
+
     <div class="bubble">
       👋 Hi! I'm LuciChat.
 
       I'm trying to start my local AI engine. This may take a little while the first time because the AI model has to download.
     </div>
+
   </div>
 
   <div id="progress" class="progress"></div>
@@ -277,6 +285,7 @@ button:disabled{
 </main>
 
 <div class="composer">
+
   <div class="composer-inner">
 
     <input
@@ -292,6 +301,7 @@ button:disabled{
     </button>
 
   </div>
+
 </div>
 
 <div class="modal" id="creatorModal">
@@ -331,22 +341,46 @@ button:disabled{
 
 <script type="module">
 
+/* =========================
+   LUCICHAT SETTINGS
+   ========================= */
+
 const MODEL =
   "SmolLM2-360M-Instruct-q4f32_1-MLC";
 
-const CREATOR_PIN = "1234";
+const WEBLLM_URL =
+  "https://esm.run/@mlc-ai/web-llm@0.2.85";
+
+const CREATOR_PIN =
+  "1234";
+
+
+/* =========================
+   APP STATE
+   ========================= */
 
 let engine = null;
+
 let starting = false;
+
 let startupFinished = false;
 
+
 const messages = [
+
   {
     role:"system",
+
     content:
       "You are LuciChat, a friendly personal AI assistant. Be helpful, concise, honest, and safe."
   }
+
 ];
+
+
+/* =========================
+   ELEMENTS
+   ========================= */
 
 const statusEl =
   document.getElementById("status");
@@ -379,6 +413,10 @@ const pinEl =
   document.getElementById("pin");
 
 
+/* =========================
+   ADD MESSAGE
+   ========================= */
+
 function addMessage(role,text){
 
   const wrapper =
@@ -387,35 +425,51 @@ function addMessage(role,text){
   wrapper.className =
     "message " + role;
 
+
   const bubble =
     document.createElement("div");
 
   bubble.className =
     "bubble";
 
-  bubble.textContent = text;
+  bubble.textContent =
+    text;
+
 
   wrapper.appendChild(bubble);
 
   chatEl.appendChild(wrapper);
 
+
   window.scrollTo({
+
     top:document.body.scrollHeight,
+
     behavior:"smooth"
+
   });
 
+
   return bubble;
+
 }
 
+
+/* =========================
+   ERROR DISPLAY
+   ========================= */
 
 function showError(error){
 
   const old =
-    document.getElementById("startupError");
+    document.getElementById(
+      "startupError"
+    );
 
   if(old){
     old.remove();
   }
+
 
   const box =
     document.createElement("div");
@@ -426,10 +480,12 @@ function showError(error){
   box.className =
     "error";
 
+
   const message =
     error && error.message
       ? error.message
       : String(error);
+
 
   box.textContent =
 `AI startup error
@@ -437,8 +493,12 @@ function showError(error){
 ${message}
 
 Debug:
+
 Model:
 ${MODEL}
+
+WebLLM:
+0.2.85
 
 Secure context:
 ${window.isSecureContext}
@@ -449,73 +509,47 @@ ${!!navigator.gpu}
 Browser:
 ${navigator.userAgent}`;
 
+
   chatEl.appendChild(box);
+
 }
 
 
-async function checkUrl(url,label){
-
-  progressEl.textContent =
-    "Checking " + label + "...";
-
-  try{
-
-    const response =
-      await fetch(url,{
-        method:"GET",
-        headers:{
-          "Range":"bytes=0-0"
-        },
-        cache:"no-store"
-      });
-
-    if(!response.ok){
-
-      throw new Error(
-        label +
-        " returned HTTP " +
-        response.status
-      );
-
-    }
-
-    return true;
-
-  }catch(error){
-
-    throw new Error(
-      label +
-      " could not be reached.\n\n" +
-      "URL:\n" +
-      url +
-      "\n\n" +
-      "Error:\n" +
-      (error?.message || error)
-    );
-
-  }
-}
-
+/* =========================
+   START AI
+   ========================= */
 
 async function startAI(){
 
-  if(starting) return;
+  if(starting){
+    return;
+  }
 
-  if(startupFinished) return;
+  if(startupFinished){
+    return;
+  }
+
 
   starting = true;
 
-  sendBtn.disabled = true;
 
-  inputEl.disabled = true;
+  sendBtn.disabled =
+    true;
+
+  inputEl.disabled =
+    true;
+
 
   statusEl.textContent =
     "Checking your device...";
 
-  progressEl.textContent = "";
+  progressEl.textContent =
+    "";
 
 
   try{
+
+    /* HTTPS CHECK */
 
     if(!window.isSecureContext){
 
@@ -525,6 +559,8 @@ async function startAI(){
 
     }
 
+
+    /* WEBGPU CHECK */
 
     if(!navigator.gpu){
 
@@ -552,6 +588,8 @@ async function startAI(){
     }
 
 
+    /* LOAD WEBLLM */
+
     statusEl.textContent =
       "Loading WebLLM...";
 
@@ -562,19 +600,19 @@ async function startAI(){
     try{
 
       WebLLM =
-        await import(
-          "https://esm.run/@mlc-ai/web-llm"
-        );
+        await import(WEBLLM_URL);
 
-    }catch(e){
+    }catch(error){
 
       throw new Error(
-        "Could not download the WebLLM library.\n\n" +
-        (e?.message || e)
+        "Could not load WebLLM.\n\n" +
+        (error?.message || error)
       );
 
     }
 
+
+    /* CHECK MODEL */
 
     const modelList =
       WebLLM.prebuiltAppConfig?.model_list || [];
@@ -582,75 +620,44 @@ async function startAI(){
 
     const modelInfo =
       modelList.find(
-        m => m.model_id === MODEL
+        item =>
+          item.model_id === MODEL
       );
 
 
     if(!modelInfo){
 
       throw new Error(
-        "The selected model was not found in this WebLLM version:\n\n" +
+        "This WebLLM version does not contain the selected model:\n\n" +
         MODEL
       );
 
     }
 
 
-    /*
-      NEW DIAGNOSTICS
-
-      We check the model's small config file
-      and the WebGPU WASM library before asking
-      WebLLM to download the full model.
-    */
-
-
-    const modelBase =
-      modelInfo.model.replace(/\/$/,"");
-
-
-    const configUrl =
-      modelBase +
-      "/mlc-chat-config.json";
-
-
-    statusEl.textContent =
-      "Checking AI model files...";
-
-
-    await checkUrl(
-      configUrl,
-      "AI model configuration"
-    );
-
-
-    statusEl.textContent =
-      "Checking WebGPU library...";
-
-
-    await checkUrl(
-      modelInfo.model_lib,
-      "WebGPU model library"
-    );
-
+    /* MODEL DOWNLOAD */
 
     statusEl.textContent =
       "Downloading local AI model...";
 
 
     progressEl.textContent =
-      "The first download can take a while. Please keep this page open.";
+      "First-time setup can take a while. Keep LuciChat open.";
 
 
     engine =
       await WebLLM.CreateMLCEngine(
+
         MODEL,
+
         {
 
           initProgressCallback:
             function(progress){
 
-              if(!progress) return;
+              if(!progress){
+                return;
+              }
 
 
               if(progress.text){
@@ -658,14 +665,18 @@ async function startAI(){
                 progressEl.textContent =
                   progress.text;
 
-              }else if(
-                typeof progress.progress === "number"
+              }
+
+              else if(
+                typeof progress.progress ===
+                "number"
               ){
 
                 const percent =
                   Math.round(
                     progress.progress * 100
                   );
+
 
                 progressEl.textContent =
                   "Downloading AI model: " +
@@ -676,41 +687,60 @@ async function startAI(){
 
             },
 
+
           logLevel:"ERROR"
 
         }
+
       );
 
 
-    startupFinished = true;
+    /* READY */
 
-    starting = false;
+    startupFinished =
+      true;
+
+    starting =
+      false;
+
 
     statusEl.textContent =
       "🟢 LuciChat is ready";
 
+
     progressEl.textContent =
       "Local AI is running on this device.";
 
-    inputEl.disabled = false;
 
-    sendBtn.disabled = false;
+    inputEl.disabled =
+      false;
+
+    sendBtn.disabled =
+      false;
+
 
     inputEl.placeholder =
       "Type a message...";
 
+
     inputEl.focus();
 
 
-  }catch(error){
+  }
 
-    starting = false;
+  catch(error){
+
+    starting =
+      false;
+
 
     statusEl.textContent =
       "🔴 LuciChat could not start";
 
+
     progressEl.textContent =
-      "Tap Retry after checking your connection.";
+      "Tap Retry to try again.";
+
 
     showError(error);
 
@@ -718,11 +748,14 @@ async function startAI(){
     const retry =
       document.createElement("button");
 
+
     retry.textContent =
       "Retry";
 
+
     retry.style.marginTop =
       "10px";
+
 
     retry.onclick =
       function(){
@@ -741,13 +774,19 @@ async function startAI(){
 }
 
 
+/* =========================
+   SEND MESSAGE
+   ========================= */
+
 async function sendMessage(){
 
   const text =
     inputEl.value.trim();
 
 
-  if(!text) return;
+  if(!text){
+    return;
+  }
 
 
   if(!engine){
@@ -768,16 +807,23 @@ async function sendMessage(){
   );
 
 
-  inputEl.value = "";
+  inputEl.value =
+    "";
 
-  inputEl.disabled = true;
 
-  sendBtn.disabled = true;
+  inputEl.disabled =
+    true;
+
+  sendBtn.disabled =
+    true;
 
 
   messages.push({
+
     role:"user",
+
     content:text
+
   });
 
 
@@ -812,14 +858,19 @@ async function sendMessage(){
 
 
     messages.push({
+
       role:"assistant",
+
       content:answer
+
     });
 
+  }
 
-  }catch(error){
+  catch(error){
 
     console.error(error);
+
 
     thinking.textContent =
       "Sorry, something went wrong while generating the response.";
@@ -827,20 +878,31 @@ async function sendMessage(){
   }
 
 
-  inputEl.disabled = false;
+  inputEl.disabled =
+    false;
 
-  sendBtn.disabled = false;
+  sendBtn.disabled =
+    false;
+
 
   inputEl.focus();
 
 }
 
 
+/* =========================
+   SEND BUTTON
+   ========================= */
+
 sendBtn.addEventListener(
   "click",
   sendMessage
 );
 
+
+/* =========================
+   ENTER KEY
+   ========================= */
 
 inputEl.addEventListener(
   "keydown",
@@ -861,6 +923,10 @@ inputEl.addEventListener(
 );
 
 
+/* =========================
+   CREATOR BUTTON
+   ========================= */
+
 creatorBtn.addEventListener(
   "click",
   function(){
@@ -868,13 +934,18 @@ creatorBtn.addEventListener(
     creatorModal.style.display =
       "flex";
 
-    pinEl.value = "";
+    pinEl.value =
+      "";
 
     pinEl.focus();
 
   }
 );
 
+
+/* =========================
+   CLOSE CREATOR
+   ========================= */
 
 closeCreator.addEventListener(
   "click",
@@ -887,11 +958,18 @@ closeCreator.addEventListener(
 );
 
 
+/* =========================
+   CLOSE MODAL OUTSIDE
+   ========================= */
+
 creatorModal.addEventListener(
   "click",
   function(event){
 
-    if(event.target === creatorModal){
+    if(
+      event.target ===
+      creatorModal
+    ){
 
       creatorModal.style.display =
         "none";
@@ -902,31 +980,44 @@ creatorModal.addEventListener(
 );
 
 
+/* =========================
+   UNLOCK CREATOR
+   ========================= */
+
 unlockCreator.addEventListener(
   "click",
   function(){
 
-    if(pinEl.value === CREATOR_PIN){
+    if(
+      pinEl.value ===
+      CREATOR_PIN
+    ){
 
       localStorage.setItem(
         "luciCreator",
         "true"
       );
 
+
       creatorBtn.textContent =
         "Creator ✓";
 
+
       creatorModal.style.display =
         "none";
+
 
       addMessage(
         "system",
         "Creator mode unlocked."
       );
 
-    }else{
+    }
 
-      pinEl.value = "";
+    else{
+
+      pinEl.value =
+        "";
 
       pinEl.placeholder =
         "Incorrect PIN";
@@ -937,8 +1028,14 @@ unlockCreator.addEventListener(
 );
 
 
+/* =========================
+   REMEMBER CREATOR MODE
+   ========================= */
+
 if(
-  localStorage.getItem("luciCreator") === "true"
+  localStorage.getItem(
+    "luciCreator"
+  ) === "true"
 ){
 
   creatorBtn.textContent =
@@ -946,6 +1043,10 @@ if(
 
 }
 
+
+/* =========================
+   START
+   ========================= */
 
 startAI();
 
