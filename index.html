@@ -3,991 +3,359 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LuciChat — Local AI</title>
+<title>LuciChat — WebLLM Diagnostic</title>
 
 <style>
 *{box-sizing:border-box}
 
 body{
   margin:0;
+  padding:20px;
   background:#0b1020;
   color:#eef2ff;
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-family:system-ui,-apple-system,sans-serif;
 }
 
-header{
+h1{
+  margin-top:0;
+  font-size:24px;
+}
+
+.card{
+  background:#151c31;
+  border:1px solid #2a3555;
+  border-radius:14px;
   padding:16px;
-  border-bottom:1px solid #26304a;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
+  margin:14px 0;
 }
 
-.logo{
-  font-size:20px;
+.test{
+  padding:14px;
+  margin:10px 0;
+  border-radius:10px;
+  background:#0e1528;
+  border:1px solid #293653;
+}
+
+.name{
   font-weight:700;
+  margin-bottom:6px;
 }
 
-.subtitle{
-  font-size:12px;
-  color:#8994b3;
-  margin-top:3px;
+.status{
+  font-size:14px;
+  word-break:break-word;
+}
+
+.ok{
+  color:#72e6a0;
+}
+
+.bad{
+  color:#ff7777;
+}
+
+.warn{
+  color:#ffd166;
 }
 
 button{
+  width:100%;
+  padding:14px;
   border:0;
   border-radius:10px;
-  padding:10px 14px;
   background:#5865f2;
   color:white;
-  font-weight:600;
-  cursor:pointer;
-}
-
-button:disabled{
-  opacity:.5;
-  cursor:not-allowed;
-}
-
-.creator-btn{
-  background:#1c2540;
-}
-
-#status{
-  padding:10px 16px;
-  background:#10172b;
-  border-bottom:1px solid #26304a;
-  color:#aeb8d5;
-  font-size:13px;
-}
-
-#chat{
-  min-height:calc(100vh - 180px);
-  padding:18px;
-  padding-bottom:110px;
-  max-width:900px;
-  margin:auto;
-}
-
-.message{
-  display:flex;
-  margin:12px 0;
-}
-
-.bubble{
-  max-width:85%;
-  padding:12px 14px;
-  border-radius:15px;
-  line-height:1.5;
-  white-space:pre-wrap;
-  overflow-wrap:anywhere;
-}
-
-.user{
-  justify-content:flex-end;
-}
-
-.user .bubble{
-  background:#5865f2;
-  border-bottom-right-radius:4px;
-}
-
-.assistant .bubble{
-  background:#171f36;
-  border:1px solid #293451;
-  border-bottom-left-radius:4px;
-}
-
-.system{
-  justify-content:center;
-}
-
-.system .bubble{
-  max-width:95%;
-  color:#aeb8d5;
-  background:#11182b;
-  border:1px solid #222d49;
-  text-align:center;
-}
-
-.error{
-  color:#ffb4b4;
-  background:#351a22;
-  border:1px solid #71313e;
-  padding:12px;
-  border-radius:12px;
-  margin:12px 0;
-  white-space:pre-wrap;
-  overflow-wrap:anywhere;
-}
-
-.progress{
-  color:#aeb8d5;
-  font-size:13px;
+  font-size:16px;
+  font-weight:700;
   margin-top:8px;
 }
 
-.composer{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  background:#0b1020;
-  border-top:1px solid #26304a;
+pre{
+  white-space:pre-wrap;
+  word-break:break-word;
+  background:#080d19;
   padding:12px;
-  z-index:5;
-}
-
-.composer-inner{
-  max-width:900px;
-  margin:auto;
-  display:flex;
-  gap:8px;
-}
-
-#input{
-  flex:1;
-  min-width:0;
-  background:#121a30;
-  border:1px solid #2b3858;
-  color:#eef2ff;
-  border-radius:12px;
-  padding:12px;
-  outline:none;
-  font-size:16px;
-}
-
-#input:focus{
-  border-color:#5865f2;
-}
-
-#send{
-  min-width:75px;
-}
-
-.modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.7);
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-  z-index:10;
-}
-
-.modal-box{
-  width:100%;
-  max-width:360px;
-  background:#121a30;
-  border:1px solid #2b3858;
-  border-radius:16px;
-  padding:20px;
-  box-shadow:0 20px 60px rgba(0,0,0,.5);
-}
-
-.modal-box h2{
-  margin-top:0;
-}
-
-#pin{
-  width:100%;
-  padding:12px;
-  margin:10px 0;
   border-radius:10px;
-  border:1px solid #2b3858;
-  background:#0b1020;
-  color:white;
-  font-size:18px;
-  outline:none;
-}
-
-.modal-buttons{
-  display:flex;
-  gap:8px;
-}
-
-.modal-buttons button{
-  flex:1;
-}
-
-.close-btn{
-  background:#293451;
-}
-
-.small{
   font-size:12px;
-  color:#8994b3;
-  margin-top:10px;
-}
-
-.retry-btn{
-  margin-top:10px;
-}
-
-@media(max-width:600px){
-  header{
-    padding:12px;
-  }
-
-  .logo{
-    font-size:18px;
-  }
-
-  #chat{
-    padding:14px;
-    padding-bottom:110px;
-  }
-
-  .bubble{
-    max-width:92%;
-  }
-
-  .composer{
-    padding:8px;
-  }
+  overflow:auto;
 }
 </style>
 </head>
 
 <body>
 
-<header>
+<h1>🔧 LuciChat WebLLM Diagnostic</h1>
+
+<div class="card">
   <div>
-    <div class="logo">🤖 LuciChat</div>
-    <div class="subtitle">Your personal AI assistant</div>
+    This page checks the things LuciChat needs before loading the AI.
   </div>
 
-  <button class="creator-btn" id="creatorBtn">
-    Creator
-  </button>
-</header>
-
-<div id="status">
-  Starting LuciChat...
+  <button onclick="runTests()">Run Tests Again</button>
 </div>
 
-<main id="chat">
+<div id="tests"></div>
 
-  <div class="message assistant">
-    <div class="bubble">
-👋 Hi! I'm LuciChat.
-
-I'm starting my local AI engine. The first startup downloads the AI model to this device.
-    </div>
-  </div>
-
-  <div id="progress" class="progress"></div>
-
-</main>
-
-<div class="composer">
-  <div class="composer-inner">
-
-    <input
-      id="input"
-      type="text"
-      placeholder="Waiting for AI..."
-      autocomplete="off"
-      disabled
-    >
-
-    <button id="send" disabled>
-      Send
-    </button>
-
-  </div>
+<div class="card">
+  <h3>Technical information</h3>
+  <pre id="info">Collecting...</pre>
 </div>
 
-<div class="modal" id="creatorModal">
-
-  <div class="modal-box">
-
-    <h2>🔐 Creator Mode</h2>
-
-    <p>Enter the creator PIN.</p>
-
-    <input
-      id="pin"
-      type="password"
-      inputmode="numeric"
-      placeholder="PIN"
-    >
-
-    <div class="modal-buttons">
-
-      <button class="close-btn" id="closeCreator">
-        Cancel
-      </button>
-
-      <button id="unlockCreator">
-        Unlock
-      </button>
-
-    </div>
-
-    <div class="small">
-      Creator mode is stored only in this browser.
-    </div>
-
-  </div>
-
-</div>
-
-<script type="module">
-
-/* =====================================================
-   LUCICHAT
-   ===================================================== */
+<script>
 
 const MODEL =
   "SmolLM2-360M-Instruct-q4f32_1-MLC";
 
-const WEBLLM_URL =
+const HF_MODEL =
+  "https://huggingface.co/mlc-ai/" + MODEL;
+
+const WEBLLM_CDN =
   "https://esm.run/@mlc-ai/web-llm@0.2.85";
 
-const CREATOR_PIN =
-  "1234";
+const tests = document.getElementById("tests");
 
+function addTest(name, status, type="warn"){
+  const div = document.createElement("div");
+  div.className = "test";
 
-/* =====================================================
-   STATE
-   ===================================================== */
+  div.innerHTML = `
+    <div class="name">${name}</div>
+    <div class="status ${type}">${status}</div>
+  `;
 
-let engine = null;
-let starting = false;
-let startupFinished = false;
-
-
-/* =====================================================
-   CHAT HISTORY
-   ===================================================== */
-
-const messages = [
-  {
-    role:"system",
-    content:
-      "You are LuciChat, a friendly personal AI assistant. Be helpful, concise, honest, and safe."
-  }
-];
-
-
-/* =====================================================
-   ELEMENTS
-   ===================================================== */
-
-const statusEl =
-  document.getElementById("status");
-
-const progressEl =
-  document.getElementById("progress");
-
-const chatEl =
-  document.getElementById("chat");
-
-const inputEl =
-  document.getElementById("input");
-
-const sendBtn =
-  document.getElementById("send");
-
-const creatorBtn =
-  document.getElementById("creatorBtn");
-
-const creatorModal =
-  document.getElementById("creatorModal");
-
-const closeCreator =
-  document.getElementById("closeCreator");
-
-const unlockCreator =
-  document.getElementById("unlockCreator");
-
-const pinEl =
-  document.getElementById("pin");
-
-
-/* =====================================================
-   ADD MESSAGE
-   ===================================================== */
-
-function addMessage(role,text){
-
-  const wrapper =
-    document.createElement("div");
-
-  wrapper.className =
-    "message " + role;
-
-  const bubble =
-    document.createElement("div");
-
-  bubble.className =
-    "bubble";
-
-  bubble.textContent =
-    text;
-
-  wrapper.appendChild(bubble);
-
-  chatEl.appendChild(wrapper);
-
-  window.scrollTo({
-    top:document.body.scrollHeight,
-    behavior:"smooth"
-  });
-
-  return bubble;
+  tests.appendChild(div);
 }
 
+async function testFetch(url, name){
 
-/* =====================================================
-   SHOW ERROR
-   ===================================================== */
-
-function showError(error){
-
-  const old =
-    document.getElementById("startupError");
-
-  if(old){
-    old.remove();
-  }
-
-  const box =
-    document.createElement("div");
-
-  box.id =
-    "startupError";
-
-  box.className =
-    "error";
-
-  let message =
-    error?.message ||
-    String(error);
-
-  box.textContent =
-`AI startup error
-
-${message}
-
-Debug information:
-
-Model:
-${MODEL}
-
-WebLLM:
-0.2.85
-
-Secure context:
-${window.isSecureContext}
-
-WebGPU:
-${!!navigator.gpu}
-
-Browser:
-${navigator.userAgent}`;
-
-  chatEl.appendChild(box);
-
-  const retry =
-    document.createElement("button");
-
-  retry.className =
-    "retry-btn";
-
-  retry.textContent =
-    "Retry";
-
-  retry.onclick =
-    function(){
-
-      retry.remove();
-      box.remove();
-
-      startAI();
-
-    };
-
-  chatEl.appendChild(retry);
-}
-
-
-/* =====================================================
-   START AI
-   ===================================================== */
-
-async function startAI(){
-
-  if(starting || startupFinished){
-    return;
-  }
-
-  starting = true;
-
-  sendBtn.disabled = true;
-  inputEl.disabled = true;
-
-  statusEl.textContent =
-    "Checking your device...";
-
-  progressEl.textContent =
-    "";
-
+  addTest(name, "⏳ Testing...");
 
   try{
 
-    /* -----------------------------------------------
-       HTTPS
-       ----------------------------------------------- */
+    const response = await fetch(url, {
+      method:"GET",
+      cache:"no-store"
+    });
 
-    if(!window.isSecureContext){
+    if(response.ok){
 
-      throw new Error(
-        "LuciChat needs HTTPS to use WebGPU."
+      const text = await response.text();
+
+      addTest(
+        name,
+        "✅ SUCCESS — HTTP " +
+        response.status +
+        " — " +
+        text.length +
+        " bytes received",
+        "ok"
       );
 
-    }
+      return true;
 
+    }else{
 
-    /* -----------------------------------------------
-       WEBGPU
-       ----------------------------------------------- */
-
-    if(!navigator.gpu){
-
-      throw new Error(
-        "WebGPU is not available in this browser."
+      addTest(
+        name,
+        "❌ FAILED — HTTP " +
+        response.status +
+        " " +
+        response.statusText,
+        "bad"
       );
 
+      return false;
     }
 
-    statusEl.textContent =
-      "Checking WebGPU...";
+  }catch(error){
+
+    addTest(
+      name,
+      "❌ FETCH ERROR — " +
+      error.name +
+      ": " +
+      error.message,
+      "bad"
+    );
+
+    return false;
+  }
+}
+
+async function testWebGPU(){
+
+  addTest("WebGPU", "⏳ Testing...");
+
+  if(!("gpu" in navigator)){
+
+    addTest(
+      "WebGPU",
+      "❌ navigator.gpu is NOT available.",
+      "bad"
+    );
+
+    return false;
+  }
+
+  try{
 
     const adapter =
       await navigator.gpu.requestAdapter();
 
     if(!adapter){
 
-      throw new Error(
-        "WebGPU was detected, but no compatible GPU adapter was found."
+      addTest(
+        "WebGPU",
+        "❌ WebGPU exists, but no GPU adapter was returned.",
+        "bad"
       );
 
+      return false;
     }
 
-
-    /* -----------------------------------------------
-       LOAD WEBLLM
-       ----------------------------------------------- */
-
-    statusEl.textContent =
-      "Loading WebLLM...";
-
-    progressEl.textContent =
-      "Connecting to the local AI engine...";
-
-    let WebLLM;
-
-    try{
-
-      WebLLM =
-        await import(WEBLLM_URL);
-
-    }catch(error){
-
-      throw new Error(
-        "WebLLM could not be downloaded.\n\n" +
-        "Check your internet connection and reload the page.\n\n" +
-        (error?.message || String(error))
-      );
-
-    }
-
-
-    /* -----------------------------------------------
-       VERIFY PREBUILT MODEL
-       ----------------------------------------------- */
-
-    statusEl.textContent =
-      "Preparing AI model...";
-
-    const modelList =
-      WebLLM.prebuiltAppConfig?.model_list || [];
-
-    const modelInfo =
-      modelList.find(
-        item =>
-          item.model_id === MODEL
-      );
-
-    if(!modelInfo){
-
-      throw new Error(
-        "The installed WebLLM package does not contain:\n\n" +
-        MODEL
-      );
-
-    }
-
-
-    /* -----------------------------------------------
-       MODEL INFO
-       ----------------------------------------------- */
-
-    progressEl.textContent =
-      "AI model found. Starting download...";
-
-
-    /* -----------------------------------------------
-       CREATE ENGINE
-       ----------------------------------------------- */
-
-    engine =
-      await WebLLM.CreateMLCEngine(
-
-        MODEL,
-
-        {
-
-          initProgressCallback:
-            function(progress){
-
-              if(!progress){
-                return;
-              }
-
-              console.log(
-                "WebLLM:",
-                progress
-              );
-
-              if(progress.text){
-
-                progressEl.textContent =
-                  progress.text;
-
-              }
-
-              if(
-                typeof progress.progress ===
-                "number"
-              ){
-
-                const percent =
-                  Math.round(
-                    progress.progress * 100
-                  );
-
-                progressEl.textContent =
-                  "Downloading AI model: " +
-                  percent +
-                  "%";
-
-              }
-
-            },
-
-          logLevel:"INFO"
-
-        }
-
-      );
-
-
-    /* -----------------------------------------------
-       READY
-       ----------------------------------------------- */
-
-    startupFinished = true;
-    starting = false;
-
-    statusEl.textContent =
-      "🟢 LuciChat is ready";
-
-    progressEl.textContent =
-      "Local AI is running on this device.";
-
-    inputEl.disabled = false;
-    sendBtn.disabled = false;
-
-    inputEl.placeholder =
-      "Type a message...";
-
-    inputEl.focus();
-
-  }
-
-
-  catch(error){
-
-    starting = false;
-
-    engine = null;
-
-    statusEl.textContent =
-      "🔴 LuciChat could not start";
-
-    progressEl.textContent =
-      "Tap Retry to try again.";
-
-    console.error(
-      "LuciChat startup error:",
-      error
+    addTest(
+      "WebGPU",
+      "✅ WebGPU adapter found.",
+      "ok"
     );
 
-    showError(error);
+    return true;
 
+  }catch(error){
+
+    addTest(
+      "WebGPU",
+      "❌ WebGPU ERROR — " +
+      error.name +
+      ": " +
+      error.message,
+      "bad"
+    );
+
+    return false;
   }
-
 }
 
+async function testWebLLMImport(){
 
-/* =====================================================
-   SEND MESSAGE
-   ===================================================== */
-
-async function sendMessage(){
-
-  const text =
-    inputEl.value.trim();
-
-  if(!text){
-    return;
-  }
-
-  if(!engine){
-
-    addMessage(
-      "system",
-      "The AI is still starting. Please wait."
-    );
-
-    return;
-
-  }
-
-  addMessage(
-    "user",
-    text
+  addTest(
+    "WebLLM JavaScript CDN",
+    "⏳ Importing WebLLM..."
   );
-
-  inputEl.value = "";
-
-  inputEl.disabled = true;
-  sendBtn.disabled = true;
-
-  messages.push({
-    role:"user",
-    content:text
-  });
-
-  const thinking =
-    addMessage(
-      "assistant",
-      "Thinking..."
-    );
-
 
   try{
 
-    const reply =
-      await engine.chat.completions.create({
+    const module =
+      await import(WEBLLM_CDN);
 
-        messages:messages,
+    if(module){
 
-        temperature:0.7,
+      addTest(
+        "WebLLM JavaScript CDN",
+        "✅ WebLLM imported successfully.",
+        "ok"
+      );
 
-        max_tokens:300
+      return true;
+    }
 
-      });
+  }catch(error){
 
-    const answer =
-      reply?.choices?.[0]?.message?.content ||
-      "I didn't get a response.";
-
-    thinking.textContent =
-      answer;
-
-    messages.push({
-      role:"assistant",
-      content:answer
-    });
-
-  }
-
-  catch(error){
-
-    console.error(
-      "Generation error:",
-      error
+    addTest(
+      "WebLLM JavaScript CDN",
+      "❌ WebLLM import failed — " +
+      error.name +
+      ": " +
+      error.message,
+      "bad"
     );
 
-    thinking.textContent =
-      "Sorry, something went wrong while generating the response.";
-
+    return false;
   }
 
-
-  inputEl.disabled = false;
-  sendBtn.disabled = false;
-
-  inputEl.focus();
-
+  return false;
 }
 
+async function runTests(){
 
-/* =====================================================
-   SEND BUTTON
-   ===================================================== */
+  tests.innerHTML = "";
 
-sendBtn.addEventListener(
-  "click",
-  sendMessage
-);
+  addTest(
+    "Secure Context",
+    window.isSecureContext
+      ? "✅ HTTPS / secure context detected."
+      : "❌ This page is NOT running in a secure context.",
+    window.isSecureContext ? "ok" : "bad"
+  );
 
+  await testWebGPU();
 
-/* =====================================================
-   ENTER KEY
-   ===================================================== */
+  await testFetch(
+    "https://esm.run/",
+    "ESM CDN connection"
+  );
 
-inputEl.addEventListener(
-  "keydown",
-  function(event){
+  await testWebLLMImport();
 
-    if(
-      event.key === "Enter" &&
-      !event.shiftKey
-    ){
+  await testFetch(
+    HF_MODEL,
+    "Hugging Face model repository"
+  );
 
-      event.preventDefault();
+  await testFetch(
+    "https://huggingface.co/mlc-ai/" +
+    MODEL +
+    "/resolve/main/mlc-chat-config.json",
+    "Model configuration file"
+  );
 
-      sendMessage();
+  await testFetch(
+    "https://huggingface.co/mlc-ai/" +
+    MODEL +
+    "/resolve/main/tokenizer.json",
+    "Tokenizer file"
+  );
 
-    }
+  addTest(
+    "Model ID",
+    "ℹ️ " + MODEL,
+    "warn"
+  );
 
-  }
-);
+  addTest(
+    "Final result",
+    "Tests complete. Send me a screenshot of this page.",
+    "warn"
+  );
 
+  document.getElementById("info").textContent =
+`Model:
+${MODEL}
 
-/* =====================================================
-   CREATOR BUTTON
-   ===================================================== */
+WebLLM:
+0.2.85
 
-creatorBtn.addEventListener(
-  "click",
-  function(){
+Secure Context:
+${window.isSecureContext}
 
-    creatorModal.style.display =
-      "flex";
+WebGPU:
+${"gpu" in navigator}
 
-    pinEl.value =
-      "";
+Browser:
+${navigator.userAgent}
 
-    pinEl.focus();
+Platform:
+${navigator.platform}
 
-  }
-);
+Online:
+${navigator.onLine}
 
-
-/* =====================================================
-   CLOSE CREATOR
-   ===================================================== */
-
-closeCreator.addEventListener(
-  "click",
-  function(){
-
-    creatorModal.style.display =
-      "none";
-
-  }
-);
-
-
-/* =====================================================
-   CLOSE MODAL OUTSIDE
-   ===================================================== */
-
-creatorModal.addEventListener(
-  "click",
-  function(event){
-
-    if(event.target === creatorModal){
-
-      creatorModal.style.display =
-        "none";
-
-    }
-
-  }
-);
-
-
-/* =====================================================
-   UNLOCK CREATOR
-   ===================================================== */
-
-unlockCreator.addEventListener(
-  "click",
-  function(){
-
-    if(pinEl.value === CREATOR_PIN){
-
-      localStorage.setItem(
-        "luciCreator",
-        "true"
-      );
-
-      creatorBtn.textContent =
-        "Creator ✓";
-
-      creatorModal.style.display =
-        "none";
-
-      addMessage(
-        "system",
-        "Creator mode unlocked."
-      );
-
-    }
-
-    else{
-
-      pinEl.value = "";
-
-      pinEl.placeholder =
-        "Incorrect PIN";
-
-    }
-
-  }
-);
-
-
-/* =====================================================
-   REMEMBER CREATOR
-   ===================================================== */
-
-if(
-  localStorage.getItem(
-    "luciCreator"
-  ) === "true"
-){
-
-  creatorBtn.textContent =
-    "Creator ✓";
-
+Language:
+${navigator.language}`;
 }
 
-
-/* =====================================================
-   START
-   ===================================================== */
-
-startAI();
+runTests();
 
 </script>
 
