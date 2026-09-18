@@ -22,13 +22,80 @@
 <main class="hero"><div class="hero-inner"><section id="welcome"><h1 class="welcome-title">Welcome to LuciChat</h1><div class="subtitle">I AM SATANIST LUCI</div><div class="divider"></div><p class="description">Ask me about <b>Satanism</b>, its history, symbolism, philosophy, rituals, and anything related. I’m here to help, guide, and share knowledge — without judgment.</p></section><div id="chat" class="chat"></div><div class="notice">AI responses use public AI services. Don't put passwords, addresses, or other private information in your messages.</div></div></main>
 <div class="composer-wrap"><div class="composer"><button class="tool image-tool" id="imageBtn" title="Image Generator">▧</button><button class="tool pent-tool" id="voiceBtn" title="Voice input">⛧</button><textarea id="input" rows="1" placeholder="Message LuciChat..."></textarea><button class="send" id="send">➤</button></div><div class="status" id="status">Ready.</div></div></section></div>
 <script>
-const TEXT_ENDPOINT='https://text.pollinations.ai/';const TEXT_MODEL='openai-fast';const IMAGE_ENDPOINT='https://image.pollinations.ai/prompt/';
+const TEXT_ENDPOINT='https://text.pollinations.ai/';
+// Local AI fallback: if the online text service fails, run LuciChat directly in the browser.
+const LOCAL_MODEL_F16='SmolLM2-360M-Instruct-q4f16_1-MLC';
+const LOCAL_MODEL_F32='SmolLM2-360M-Instruct-q4f32_1-MLC';
+let localEnginePromise=null;
+async function getLocalEngine(){
+  if(localEnginePromise)return localEnginePromise;
+  if(!window.isSecureContext||!navigator.gpu)throw new Error('WebGPU unavailable');
+  localEnginePromise=(async()=>{
+    const mod=await import('https://esm.run/@mlc-ai/web-llm');
+    const adapter=await navigator.gpu.requestAdapter();
+    if(!adapter)throw new Error('No WebGPU adapter');
+    const model=adapter.features?.has('shader-f16')?LOCAL_MODEL_F16:LOCAL_MODEL_F32;
+    status.textContent='Loading LuciChat AI…';
+    return mod.CreateMLCEngine(model,{initProgressCallback:p=>{if(p?.text)status.textContent=p.text;}});
+  })().catch(e=>{localEnginePromise=null;throw e});
+  return localEnginePromise;
+}
+const TEXT_MODEL='openai-fast';const IMAGE_ENDPOINT='https://image.pollinations.ai/prompt/';
 const input=document.getElementById('input'),send=document.getElementById('send'),chat=document.getElementById('chat'),welcome=document.getElementById('welcome'),status=document.getElementById('status');const menu=document.getElementById('menu'),moreBtn=document.getElementById('moreBtn'),modeSelect=document.getElementById('modeSelect');
 let mode=localStorage.getItem('luci_mode')||'satanic';if(!['satanic','lore'].includes(mode))mode='satanic';let messages=[];try{messages=JSON.parse(localStorage.getItem('lucichat_messages')||'[]')}catch(e){messages=[]}modeSelect.value=mode;
 const modeText={satanic:'You are LuciChat, a fictional dark-themed Satanist AI persona. Be concise, factual, and respectful. Discuss Satanism, history, philosophy, symbolism, mythology, literature, and related topics accurately. Do not claim to literally be Satan or a supernatural entity. Do not provide dangerous or harmful instructions.',lore:'You are LuciChat in Satanic Lore mode. Give concise, factual, balanced explanations of Satanism, its traditions, history, symbols, philosophy, mythology, and literature. Distinguish historical facts, beliefs, modern movements, and fiction. Do not provide dangerous or harmful instructions.'};
 function save(){localStorage.setItem('lucichat_messages',JSON.stringify(messages));localStorage.setItem('luci_mode',mode)}function render(){chat.innerHTML='';welcome.style.display=messages.length?'none':'block';for(const m of messages){const box=document.createElement('div');box.className='msg '+(m.role==='user'?'user':'ai');const who=document.createElement('div');who.className='who';who.textContent=m.role==='user'?'You':'LuciChat';box.append(who);if(m.image){const p=document.createElement('div');p.textContent=m.content;box.append(p);const img=document.createElement('img');img.className='aiimg';img.loading='lazy';img.src=m.image;img.alt=m.content;box.append(img)}else{const text=document.createElement('div');text.textContent=m.content;box.append(text)}chat.append(box)}}function add(role,content,extra={}){messages.push({role,content,...extra});save();render()}
 function isImage(t){return /\b(generate|create|draw|make|show|design)\b.{0,35}\b(image|picture|photo|art|drawing|portrait|wallpaper|logo)\b/i.test(t)||/\b(image|picture|photo|art|drawing|portrait|wallpaper)\b.{0,25}\b(of|for)\b/i.test(t)}function imagePrompt(t){return t.replace(/\b(generate|create|draw|make|show|design)\b/gi,'').replace(/\b(an?|the)\b/gi,'').trim()}
-async function ask(text){const clean=text.trim();if(!clean||send.disabled)return;send.disabled=true;input.disabled=true;status.textContent='Thinking…';add('user',clean);if(isImage(clean)){const p=imagePrompt(clean);status.textContent='Creating image…';add('assistant','Generated image: '+(p||clean),{image:IMAGE_ENDPOINT+encodeURIComponent(p||clean)+'?model=flux&width=768&height=768&nologo=true'});status.textContent='Ready.';send.disabled=false;input.disabled=false;input.focus();return}try{const recent=messages.filter(m=>!m.image).slice(-7).map(m=>({role:m.role==='assistant'?'assistant':'user',content:m.content}));const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),28000);const r=await fetch(TEXT_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:TEXT_MODEL,messages:[{role:'system',content:modeText[mode]},...recent],temperature:.5,max_tokens:180}),signal:controller.signal});clearTimeout(timer);if(!r.ok)throw new Error('HTTP '+r.status);const data=await r.json();let answer=data?.choices?.[0]?.message?.content||data?.choices?.[0]?.text||data?.output||'';if(typeof answer!=='string')answer=JSON.stringify(answer);if(!answer.trim())throw new Error('empty');add('assistant',answer.trim());status.textContent='Ready.'}catch(e){status.textContent=e.name==='AbortError'?'Timed out — try again.':'Connection error — try again.';add('assistant',e.name==='AbortError'?'The AI took too long to respond. Try a shorter message.':'I could not reach the public AI service right now. Please try again.')}send.disabled=false;input.disabled=false;input.focus()}
+async function ask(text){
+  const clean=text.trim();
+  if(!clean||send.disabled)return;
+  send.disabled=true; input.disabled=true; status.textContent='Thinking…'; add('user',clean);
+
+  if(isImage(clean)){
+    const p=imagePrompt(clean); status.textContent='Creating image…';
+    add('assistant','Generated image: '+(p||clean),{image:IMAGE_ENDPOINT+encodeURIComponent(p||clean)+'?model=flux&width=768&height=768&nologo=true'});
+    status.textContent='Ready.'; send.disabled=false; input.disabled=false; input.focus(); return;
+  }
+
+  const recent=messages.filter(m=>!m.image).slice(-7).map(m=>({role:m.role==='assistant'?'assistant':'user',content:m.content}));
+  let answered=false;
+
+  // Try the online service first.
+  try{
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),9000);
+    const r=await fetch(TEXT_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:TEXT_MODEL,messages:[{role:'system',content:modeText[mode]},...recent],temperature:.5,max_tokens:180}),
+      signal:controller.signal});
+    clearTimeout(timer);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    let answer=data?.choices?.[0]?.message?.content||data?.choices?.[0]?.text||data?.output||'';
+    if(typeof answer!=='string')answer=JSON.stringify(answer);
+    if(!answer.trim())throw new Error('empty');
+    add('assistant',answer.trim()); answered=true; status.textContent='Ready.';
+  }catch(_onlineError){}
+
+  // If the online API is unavailable, use the local browser model.
+  if(!answered){
+    try{
+      status.textContent='Starting local LuciChat AI…';
+      const engine=await getLocalEngine();
+      const result=await engine.chat.completions.create({
+        messages:[{role:'system',content:modeText[mode]},...recent],
+        temperature:.5,max_tokens:180
+      });
+      const answer=String(result?.choices?.[0]?.message?.content||'').trim();
+      if(!answer)throw new Error('empty local response');
+      add('assistant',answer); status.textContent='Ready.'; answered=true;
+    }catch(e){
+      status.textContent=e.message==='WebGPU unavailable'?'WebGPU unavailable — online AI could not be reached.':'AI unavailable — try again.';
+      add('assistant','I could not start LuciChat AI on this device. Please reload and try again.');
+    }
+  }
+
+  send.disabled=false; input.disabled=false; input.focus();
+}
 moreBtn.onclick=()=>menu.classList.toggle('open');document.addEventListener('click',e=>{if(!menu.contains(e.target)&&e.target!==moreBtn)menu.classList.remove('open')});document.getElementById('newChatBtn').onclick=()=>{messages=[];save();render();status.textContent='New chat.';menu.classList.remove('open');input.focus()};document.getElementById('googleBtn').onclick=()=>{const q=input.value.trim()||messages.filter(m=>m.role==='user').slice(-1)[0]?.content||'';if(q)window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank');menu.classList.remove('open')};modeSelect.onchange=()=>{mode=modeSelect.value;save();status.textContent=mode==='lore'?'Satanic Lore mode.':'Satanist Luci mode.'};document.getElementById('imageBtn').onclick=()=>{input.value='Create an image of ';input.focus()};document.getElementById('voiceBtn').onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){status.textContent='Voice input is not supported here.';return}const rec=new SR();rec.lang='en-US';rec.interimResults=false;status.textContent='Listening…';rec.onresult=e=>{input.value=e.results[0][0].transcript;status.textContent='Ready to send.';input.focus()};rec.onerror=()=>status.textContent='Voice input stopped.';rec.onend=()=>{if(status.textContent==='Listening…')status.textContent='Ready.'};rec.start()};send.onclick=()=>ask(input.value);input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ask(input.value)}});document.getElementById('imageNav').onclick=()=>{input.value='Create an image of ';input.focus()};document.getElementById('loreNav').onclick=()=>{mode='lore';modeSelect.value='lore';save();status.textContent='Satanic Lore mode.'};document.getElementById('settingsNav').onclick=()=>status.textContent='Settings are in the ⋮ menu.';document.getElementById('settingsBtn').onclick=()=>{status.textContent='LuciChat uses local browser history and public AI services.';menu.classList.remove('open')};render();
 </script>
 </body></html>
