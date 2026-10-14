@@ -93,7 +93,27 @@ public class WakeWordService extends Service {
                 Intent open = new Intent(this, MainActivity.class);
                 open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 open.putExtra("aura_wake_word", true);
-                startActivity(open);
+                android.app.KeyguardManager keyguard =
+                    (android.app.KeyguardManager) getSystemService(KEYGUARD_SERVICE);
+                if (keyguard != null && keyguard.isKeyguardLocked()) {
+                    PendingIntent openPending = PendingIntent.getActivity(
+                        this, 7003, open,
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+                    Notification.Builder builder = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                        ? new Notification.Builder(this, CHANNEL_ID)
+                        : new Notification.Builder(this);
+                    Notification heard = builder.setContentTitle("Aura heard you")
+                        .setContentText("Tap to open Aura.")
+                        .setSmallIcon(android.R.drawable.ic_btn_speak_now)
+                        .setContentIntent(openPending)
+                        .setAutoCancel(true)
+                        .build();
+                    NotificationManager manager =
+                        (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                    if (manager != null) manager.notify(NOTIFICATION_ID + 1, heard);
+                } else {
+                    startActivity(open);
+                }
                 stopSelf();
                 return;
             }
