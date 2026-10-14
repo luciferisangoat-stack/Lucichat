@@ -2,7 +2,9 @@ package com.lucichat.app;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
@@ -18,71 +20,72 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         webView = new WebView(this);
         setContentView(webView);
-
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
         settings.setAllowFileAccess(false);
         settings.setMediaPlaybackRequiresUserGesture(false);
-
         webView.setWebViewClient(new WebViewClient());
         webView.setWebChromeClient(new WebChromeClient() {
-            @Override
-            public void onPermissionRequest(PermissionRequest request) {
+            @Override public void onPermissionRequest(PermissionRequest request) {
                 runOnUiThread(() -> {
                     String host = request.getOrigin().getHost();
                     boolean isAuraOrigin = "aura-ai-tvzpe5.v2.appdeploy.ai".equals(host);
                     String[] requested = request.getResources();
                     boolean audioOnly = requested.length > 0;
                     for (String resource : requested) {
-                        if (!PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)) {
-                            audioOnly = false;
-                            break;
-                        }
+                        if (!PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)) audioOnly = false;
                     }
-                    boolean androidAudioGranted =
-                        checkSelfPermission(Manifest.permission.RECORD_AUDIO)
-                            == PackageManager.PERMISSION_GRANTED;
-                    if (isAuraOrigin && audioOnly && androidAudioGranted) {
-                        request.grant(requested);
-                    } else {
-                        request.deny();
-                    }
+                    boolean granted = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+                    if (isAuraOrigin && audioOnly && granted) request.grant(requested);
+                    else request.deny();
                 });
             }
         });
 
-        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)
-                == PackageManager.PERMISSION_GRANTED) {
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
             webView.loadUrl(AURA_URL);
         } else {
-            requestPermissions(
-                new String[]{Manifest.permission.RECORD_AUDIO},
-                AUDIO_PERMISSION_REQUEST
-            );
+            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, AUDIO_PERMISSION_REQUEST);
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(
-            int requestCode, String[] permissions, int[] grantResults) {
+    protected void onResume() {
+        super.onResume();
+        if (getIntent() != null && getIntent().getBooleanExtra("aura_wake_word", false)) {
+            getIntent().removeExtra("aura_wake_word");
+            // Opening the app is the wake-word action; the web app still controls its own response.
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == AUDIO_PERMISSION_REQUEST) {
-            // Load Aura either way; voice features need permission to use the microphone.
             webView.loadUrl(AURA_URL);
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startWakeWordServiceIfAllowed();
+            }
         }
+    }
+
+    private void startWakeWordServiceIfAllowed() {
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 43);
+            return;
+        }
+        Intent service = new Intent(this, WakeWordService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(service);
+        else startService(service);
     }
 
     @Override
     public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
-        }
+        if (webView != null && webView.canGoBack()) webView.goBack();
+        else super.onBackPressed();
     }
 }
