@@ -1,6 +1,8 @@
 package com.lucichat.app;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
@@ -10,6 +12,7 @@ import android.webkit.WebViewClient;
 
 public class MainActivity extends Activity {
     private static final String AURA_URL = "https://aura-ai-tvzpe5.v2.appdeploy.ai/";
+    private static final int AUDIO_PERMISSION_REQUEST = 42;
     private WebView webView;
 
     @Override
@@ -41,7 +44,10 @@ public class MainActivity extends Activity {
                             break;
                         }
                     }
-                    if (isAuraOrigin && audioOnly) {
+                    boolean androidAudioGranted =
+                        checkSelfPermission(Manifest.permission.RECORD_AUDIO)
+                            == PackageManager.PERMISSION_GRANTED;
+                    if (isAuraOrigin && audioOnly && androidAudioGranted) {
                         request.grant(requested);
                     } else {
                         request.deny();
@@ -50,7 +56,25 @@ public class MainActivity extends Activity {
             }
         });
 
-        webView.loadUrl(AURA_URL);
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)
+                == PackageManager.PERMISSION_GRANTED) {
+            webView.loadUrl(AURA_URL);
+        } else {
+            requestPermissions(
+                new String[]{Manifest.permission.RECORD_AUDIO},
+                AUDIO_PERMISSION_REQUEST
+            );
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == AUDIO_PERMISSION_REQUEST) {
+            // Load Aura either way; voice features need permission to use the microphone.
+            webView.loadUrl(AURA_URL);
+        }
     }
 
     @Override
